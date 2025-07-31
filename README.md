@@ -6,7 +6,7 @@ A modern Go-based blog API with AI integration using MongoDB Atlas, built with c
 
 ### Prerequisites
 - Docker and Docker Compose
-- MongoDB Atlas account
+- MongoDB (included in Docker setup)
 
 ### Setup
 1. **Clone the repository:**

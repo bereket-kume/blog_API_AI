@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"blog-api/Infrastructure/database"
+	"blog_API_AI/Infrastructure/database"
 
 	"github.com/joho/godotenv"
 )

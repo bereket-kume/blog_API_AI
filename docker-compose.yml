@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: blog-api
+    container_name: blog_API_AI
     ports:
       - "8080:8080"
     environment:
@@ -23,27 +23,25 @@ services:
       retries: 3
       start_period: 40s
 
-  # Optional: Add a local MongoDB instance for development/testing
-  # Uncomment the following service if you want to use local MongoDB instead of Atlas
-  # mongodb:
-  #   image: mongo:7.0
-  #   container_name: mongodb
-  #   restart: unless-stopped
-  #   ports:
-  #     - "27017:27017"
-  #   environment:
-  #     - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
-  #     - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
-  #     - MONGO_INITDB_DATABASE=${MONGO_DATABASE}
-  #   volumes:
-  #     - mongodb_data:/data/db
-  #   networks:
-  #     - blog-network
+  # Local MongoDB instance
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - blog-network
 
 networks:
   blog-network:
     driver: bridge
 
-# Uncomment if using local MongoDB
-# volumes:
-#   mongodb_data:
+volumes:
+  mongodb_data:
