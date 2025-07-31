@@ -1,4 +1,4 @@
-module blog_API_AI
+module blog-api
 
 go 1.22.3
 
