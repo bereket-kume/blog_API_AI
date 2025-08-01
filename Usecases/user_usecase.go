@@ -21,11 +21,11 @@ type UserUsecaseInterface interface {
 
 type userUsecase struct {
 	repo         interfaces.UserRepository
-	hasher       models.Hasher
-	tokenService models.TokenService
+	hasher       interfaces.Hasher
+	tokenService interfaces.TokenService
 }
 
-func NewUserUsecase(repo interfaces.UserRepository, hasher models.Hasher, tokenService models.TokenService) *userUsacase {
+func NewUserUsecase(repo interfaces.UserRepository, hasher interfaces.Hasher, tokenService models.TokenService) *userUsecase {
 	return &userUsecase{repo: repo, hasher: hasher, tokenService: tokenService}
 }
 

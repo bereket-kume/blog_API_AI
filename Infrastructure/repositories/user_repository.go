@@ -18,7 +18,7 @@ func NewUserMongoRepo(col *mongo.Collection) *userMongoRepo {
 }
 
 func (ur *userMongoRepo) Insert(user models.User) error {
-	db_user := db_models.FromDomain(user)
+	db_user := db_models.FromDomainUser(user)
 	_, err := ur.collection.InsertOne(context.TODO(), db_user)
 	return err
 }
@@ -27,7 +27,7 @@ func (ur *userMongoRepo) FindByEmail(email string) (models.User, error) {
 	filter := bson.M{"email": email}
 	var user db_models.UserModel
 	err := ur.collection.FindOne(context.TODO(), filter).Decode(&user)
-	return db_models.ToDomain(user), err
+	return db_models.ToDomainUser(user), err
 }
 
 func (ur *userMongoRepo) UpdatePass(email string, passwordHash string) error {

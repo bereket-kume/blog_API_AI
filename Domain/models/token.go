@@ -1,17 +1,19 @@
 package models
 
-type Hasher interface {
-	HashPassword(password string) string
-	VerifyPassword(hashed, password string) bool
+import "time"
+
+type Token struct {
+	ID        string // Use string instead of ObjectID
+	UserID    string
+	Token     string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	IP        string
+	Device    string
 }
 
 type UserClaims struct {
 	UserId string
 	Email  string
 	Role   string
-}
-
-type TokenService interface {
-	GenerateToken(userID, email, role string) (string, error)
-	VerifyToken(tokenStr string) (*UserClaims, error)
 }
