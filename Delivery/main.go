@@ -1,26 +1,33 @@
 package main
 
 import (
-	"log"
-	"os"
-
+	"blog-api/Delivery/controllers"
+	"blog-api/Delivery/routers"
 	"blog-api/Infrastructure/database"
+	"blog-api/Infrastructure/repositories"
+	usecases "blog-api/Usecases"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using system environment variables")
+	godotenv.Load()
+	mongo, err := database.ConnectDB()
+	if err != nil {
+		panic(err)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	// dbName := os.Getenv("DB_NAME")
 
-	if err := database.Connect(); err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
-	}
+	blogCollection := mongo.GetCollection("blog_db", "blogs")
+
+	blogRepo := repositories.NewBlogRepository(blogCollection)
+
+	blogUseCase := usecases.NewBlogUseCase(blogRepo)
+
+	blogController := controllers.NewBlogController(blogUseCase)
+
+	r := routers.SetupRoutes(blogController)
+	r.Run(":8080")
 
 }
