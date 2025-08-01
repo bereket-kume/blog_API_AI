@@ -61,8 +61,8 @@ func (uc *userUsecase) Login(user models.User) (string, error) {
 		return "", err
 	}
 
-	if !existing_user.Verified{
-		return 
+	if !existing_user.Verified {
+		return "", errors.New("user not verified")
 	}
 
 	if !uc.hasher.VerifyPassword(existing_user.Password, user.Password) {
@@ -89,4 +89,3 @@ func (uc *userUsecase) Demote(email string) error {
 	err := uc.repo.UpdateRole(email, "user")
 	return err
 }
-
