@@ -1,26 +1,27 @@
 package main
 
 import (
+	"blog-api/Delivery/routers"
+	Database "blog-api/Infrastructure/database"
 	"log"
 	"os"
-
-	"blog-api/Infrastructure/database"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using system environment variables")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
 	}
 
+	Database.Connect()
+
+	r := routers.SetupRouter()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	if err := database.Connect(); err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
-	}
-
+	r.Run(":" + port)
 }
