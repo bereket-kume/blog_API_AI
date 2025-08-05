@@ -28,7 +28,7 @@ func (tr *tokenMongoRepo) DeleteToken(tokenID string) error {
 }
 func (tr *tokenMongoRepo) Update(token models.Token) error {
 	db_token := db_models.FromDomainToken(token)
-	filter := bson.M{"token_hash": db_token.TokenHash}
+	filter := bson.M{"id": db_token.ID}
 	update := bson.M{"$set": db_token}
 	_, err := tr.collection.UpdateOne(context.TODO(), filter, update)
 	return err

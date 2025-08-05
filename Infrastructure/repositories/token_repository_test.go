@@ -3,108 +3,90 @@ package repositories
 import (
 	"blog-api/Domain/models"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
 )
 
-// Example assumes your Insert method uses collection.InsertOne
-
-func TestUserMongoRepo(t *testing.T) {
+func TestTokenMongoRepo(t *testing.T) {
 	m := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	m.Run("Insert", func(mt *mtest.T) {
-		repo := NewUserMongoRepo(mt.Coll)
-		user := models.User{
-			ID:       "507f1f77bcf86cd799439011",
-			Username: "testuser",
-			Email:    "test1@example.com",
-			Password: "pass",
-			Role:     "user",
-			Verified: false,
+		repo := NewTokenMongoRepo(mt.Coll)
+		token := models.Token{
+			ID:        "507f1f77bcf86cd799439011",
+			UserID:    "testuser",
+			Token:     "token-string",
+			CreatedAt: time.Now(),
+			ExpiresAt: time.Now(),
+			IP:        "1234.5.6",
+			Device:    "Chrome on window",
 		}
 
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
-		err := repo.Insert(user)
+		err := repo.CreateToken(token)
 		assert.NoError(mt, err)
 	})
-	m.Run("FindByEmail", func(mt *mtest.T) {
-		repo := NewUserMongoRepo(mt.Coll)
-		expected := models.User{
-			ID:       "507f1f77bcf86cd799439011",
-			Username: "testuser",
-			Email:    "test1@example.com",
-			Password: "pass",
-			Role:     "user",
-			Verified: false,
+	m.Run("FindByID", func(mt *mtest.T) {
+		repo := NewTokenMongoRepo(mt.Coll)
+		expected := models.Token{
+			ID:        "507f1f77bcf86cd799439011",
+			UserID:    "testuser",
+			Token:     "token-string",
+			CreatedAt: time.Now(),
+			ExpiresAt: time.Now(),
+			IP:        "1234.5.6",
+			Device:    "Chrome on window",
 		}
 
 		// Create a mock response document
 		first := mtest.CreateCursorResponse(1, "test.users", mtest.FirstBatch, bson.D{
 			{"_id", expected.ID},
-			{"username", expected.Username},
-			{"email", expected.Email},
-			{"password", expected.Password},
-			{"role", expected.Role},
-			{"verified", expected.Verified},
+			{"user_id", expected.UserID},
+			{"token_hash", expected.Token},
+			{"created_at", expected.CreatedAt},
+			{"expired_at", expected.ExpiresAt},
+			{"ip", expected.IP},
+			{"device", expected.Device},
 		})
 		mt.AddMockResponses(first)
 
-		foundUser, err := repo.FindByEmail(expected.Email)
+		foundUser, err := repo.GetToken(expected.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, expected.Email, foundUser.Email)
+		assert.Equal(t, expected.UserID, foundUser.UserID)
 	})
-	m.Run("UpdatePass Success", func(mt *mtest.T) {
-		repo := NewUserMongoRepo(mt.Coll)
+	m.Run("Update", func(mt *mtest.T) {
+		repo := NewTokenMongoRepo(mt.Coll)
 		// Simulate MongoDB's UpdateOne success response
-		mt.AddMockResponses(mtest.CreateSuccessResponse(
-			bson.E{Key: "n", Value: 1},
-			bson.E{Key: "nModified", Value: 1},
-			bson.E{Key: "ok", Value: 1},
-		))
 
-		err := repo.UpdatePass("test@example.com", "newHashedPassword")
+		token := models.Token{
+			ID:        "507f1f77bcf86cd799439011",
+			UserID:    "testuser",
+			Token:     "token-string",
+			CreatedAt: time.Now(),
+			ExpiresAt: time.Now(),
+			IP:        "1234.5.6",
+			Device:    "Chrome on window",
+		}
+
+		mt.AddMockResponses(mtest.CreateSuccessResponse()) // mock successful update
+
+		err := repo.Update(token)
+
 		assert.NoError(t, err)
+
 	})
-	m.Run("UpdateRole Success", func(mt *mtest.T) {
+	m.Run("Delete", func(mt *mtest.T) {
 		repo := NewUserMongoRepo(mt.Coll)
-		// Simulate MongoDB's UpdateOne success response
-		mt.AddMockResponses(mtest.CreateSuccessResponse(
-			bson.E{Key: "n", Value: 1},
-			bson.E{Key: "nModified", Value: 1},
-			bson.E{Key: "ok", Value: 1},
-		))
+		mt.AddMockResponses(mtest.CreateSuccessResponse()) // Simulates successful deletion
 
-		err := repo.UpdateRole("test@example.com", "admin")
+		err := repo.Delete("1")
 		assert.NoError(t, err)
-	})
 
-	m.Run("Verify Success", func(mt *mtest.T) {
-		repo := NewUserMongoRepo(mt.Coll)
-		// Simulate MongoDB's UpdateOne success response
-		mt.AddMockResponses(mtest.CreateSuccessResponse(
-			bson.E{Key: "n", Value: 1},
-			bson.E{Key: "nModified", Value: 1},
-			bson.E{Key: "ok", Value: 1},
-		))
-
-		err := repo.Verify("test@example.com")
-		assert.NoError(t, err)
-	})
-	m.Run("CountUsers Success", func(mt *mtest.T) {
-		repo := NewUserMongoRepo(mt.Coll)
-		// Simulate a successful count response (e.g. 5 users)
-		mt.AddMockResponses(mtest.CreateCursorResponse(0, "test.users", mtest.FirstBatch, bson.D{
-			{"n", int32(5)},
-		}))
-
-		count, err := repo.CountUsers()
-		assert.NoError(t, err)
-		assert.Equal(t, int64(5), count)
 	})
 }
 
-//##############Integration test with real mongodb
 // package repositories
 
 // import (

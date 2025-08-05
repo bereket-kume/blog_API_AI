@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Token struct {
 	ID        string // Use string instead of ObjectID
@@ -12,8 +14,18 @@ type Token struct {
 	Device    string
 }
 
-type UserClaims struct {
-	UserId string
-	Email  string
-	Role   string
+type UserAccessClaims struct {
+	UserID    string
+	Email     string
+	Role      string
+	ExpiresAt time.Time
+	CreatedAt time.Time
+}
+type UserRefreshClaims struct {
+	UserID    string
+	Email     string
+	Role      string
+	TokenID   string
+	ExpiresAt time.Time
+	CreatedAt time.Time
 }
