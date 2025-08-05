@@ -4,7 +4,9 @@ import (
 	"blog-api/Domain/interfaces"
 	"blog-api/Domain/models"
 	"errors"
+	"log"
 	"net/mail"
+	"time"
 )
 
 func isValidEmail(email string) bool {
@@ -22,6 +24,7 @@ type UserUsecaseInterface interface {
 	Login(user models.User) (OutPutToken, error)
 	Promote(email string) error
 	Demote(email string) error
+	RefreshToken(token string) (string, error)
 }
 
 type userUsecase struct {
@@ -35,16 +38,55 @@ func NewUserUsecase(repo interfaces.UserRepository, hasher interfaces.Hasher, to
 	return &userUsecase{repo: repo, hasher: hasher, tokenService: tokenService, tokenRepo: tokenRepo}
 }
 
+func (uc *userUsecase) RefreshToken(tokenStr string) (string, error) {
+	// 1️⃣ Verify JWT refresh token (signature, format)
+	token, err := uc.tokenService.VerifyRefreshToken(tokenStr)
+	if err != nil {
+		return "", err
+	}
+
+	// 2️⃣ Expiry check
+	if token.ExpiresAt.Before(time.Now()) {
+		if err := uc.tokenRepo.DeleteToken(token.TokenID); err != nil {
+			// optional: log error, but don't return it
+			log.Printf("failed to delete expired token: %v", err)
+		}
+		return "", errors.New("the refresh token expired")
+	}
+
+	// 3️⃣ Fetch token from DB
+	dbToken, err := uc.tokenRepo.GetToken(token.TokenID)
+	if err != nil {
+		return "", err
+	}
+	if dbToken == nil {
+		return "", errors.New("refresh token not found")
+	}
+
+	// 4️⃣ Verify stored hashed token matches the raw token string
+	if !uc.hasher.VerifyPassword(dbToken.Token, tokenStr) {
+		return "", errors.New("invalid refresh token")
+	}
+
+	// 6️⃣ Generate new access token
+	accessToken, err := uc.tokenService.GenerateAccessToken(token.UserID, token.Email, token.Role)
+	if err != nil {
+		return "", err
+	}
+	return accessToken, nil
+
+}
+
 func (uc *userUsecase) Register(user models.User) error {
 	if len(user.Username) < 3 || len(user.Username) > 50 {
 		return errors.New("username must be between 3 and 50 characters")
 	}
 	if !isValidEmail(user.Email) {
-		return errors.New("Invalid Email address")
+		return errors.New("invalid email address")
 	}
 
 	if len(user.Password) < 8 {
-		return errors.New("Minimum length of password")
+		return errors.New("minimum length of password")
 	}
 
 	hashed_pw := uc.hasher.HashPassword(user.Password)

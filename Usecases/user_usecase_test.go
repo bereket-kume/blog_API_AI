@@ -5,6 +5,7 @@ import (
 	"blog-api/mocks" // generated mocks
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -50,7 +51,7 @@ func TestRegister_InvalidEmail(t *testing.T) {
 	}
 
 	err := uc.Register(user)
-	assert.EqualError(t, err, "Invalid Email address")
+	assert.EqualError(t, err, "invalid email address")
 }
 
 func TestLogin_Success(t *testing.T) {
@@ -159,4 +160,75 @@ func TestDemote_super_admin(t *testing.T) {
 
 	err := uc.Demote("john@example.com")
 	assert.EqualError(t, err, "superadmin cannot be demoted")
+}
+
+func TestRefreshToken_ExpiredToken(t *testing.T) {
+	_, _, mockTokenService, mockTokenRepo, uc := setup()
+
+	refreshStr := "refresh.jwt.token"
+	expiredTime := time.Now().Add(-time.Hour)
+
+	// TokenService.VerifyRefreshToken should return expired token claims
+	mockTokenService.On("VerifyRefreshToken", refreshStr).Return(
+		&models.UserRefreshClaims{
+			UserID:    "123",
+			Email:     "test@example.com",
+			Role:      "user",
+			TokenID:   "token123",
+			ExpiresAt: expiredTime,
+		}, nil,
+	)
+
+	// Expect DeleteToken to be called for expired token
+	mockTokenRepo.On("DeleteToken", "token123").Return(nil)
+
+	_, err := uc.RefreshToken(refreshStr)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "the refresh token expired")
+	// assert.Empty(t, token.Access_token)
+	mockTokenService.AssertExpectations(t)
+	mockTokenRepo.AssertExpectations(t)
+}
+
+func TestRefreshToken_Success(t *testing.T) {
+	_, mockHasher, mockTokenService, mockTokenRepo, uc := setup()
+
+	refreshStr := "refresh.jwt.token"
+	validTime := time.Now().Add(time.Hour)
+
+	// Step 1: Mock VerifyRefreshToken to return valid claims
+	mockTokenService.On("VerifyRefreshToken", refreshStr).Return(
+		&models.UserRefreshClaims{
+			UserID:    "123",
+			Email:     "test@example.com",
+			Role:      "user",
+			TokenID:   "token123",
+			ExpiresAt: validTime,
+		}, nil,
+	)
+
+	// Step 2: Mock GetToken to return stored hashed refresh token
+	mockTokenRepo.On("GetToken", "token123").Return(
+		&models.Token{
+			ID:    "token123",
+			Token: "hashed_token",
+		}, nil,
+	)
+
+	// Step 3: Mock password verification for refresh token
+	mockHasher.On("VerifyPassword", "hashed_token", refreshStr).Return(true)
+
+	// Step 4: Mock GenerateAccessToken for new access token
+	mockTokenService.On("GenerateAccessToken", "123", "test@example.com", "user").Return("new_access_token", nil)
+
+	// Call method
+	token, err := uc.RefreshToken(refreshStr)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "new_access_token", token)
+
+	mockTokenService.AssertExpectations(t)
+	mockTokenRepo.AssertExpectations(t)
+	mockHasher.AssertExpectations(t)
 }
