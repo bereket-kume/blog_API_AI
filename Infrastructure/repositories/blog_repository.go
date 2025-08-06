@@ -66,6 +66,31 @@ func (r *BlogRepository) GetPaginatedBlogs(page, limit int) ([]domain.Blog, erro
 	return blogs, nil
 }
 
+func (r *BlogRepository) GetBlogByID(blogID string) (domain.Blog, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	id, err := primitive.ObjectIDFromHex(blogID)
+	if err != nil {
+		log.Printf("Invalid blog ID: %v", err)
+		return domain.Blog{}, err
+	}
+
+	filter := bson.M{"_id": id}
+	var blog domain.Blog
+	err = r.BlogCollection.FindOne(ctx, filter).Decode(&blog)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			log.Printf("Blog not found with ID: %s", blogID)
+			return domain.Blog{}, err
+		}
+		log.Printf("Error fetching blog by ID: %v", err)
+		return domain.Blog{}, err
+	}
+
+	return blog, nil
+}
+
 func (r *BlogRepository) UpdateBlog(blog domain.Blog) (domain.Blog, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
