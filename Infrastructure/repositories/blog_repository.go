@@ -23,23 +23,12 @@ func NewBlogRepository(db *mongo.Collection) *BlogRepository {
 }
 
 func (r *BlogRepository) CreateBlog(blog domain.Blog) (domain.Blog, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	blog.ID = primitive.NewObjectID()
-	blog.AuthorID = primitive.NewObjectID()
-	blog.CreatedAt = time.Now()
-	blog.UpdatedAt = nil
-	blog.Popularity = domain.Popularity{
-		Views:    0,
-		Likes:    0,
-		Dislikes: 0,
-		Comments: 0,
-	}
-	_, err := r.BlogCollection.InsertOne(ctx, blog)
-	log.Printf("Error inserting blog into MongoDB: %v", err)
+	result, err := r.BlogCollection.InsertOne(context.Background(), blog)
 	if err != nil {
+		log.Printf("Error inserting blog into MongoDB: %v", err)
 		return domain.Blog{}, err
 	}
+	blog.ID = result.InsertedID.(primitive.ObjectID)
 	return blog, nil
 }
 
@@ -117,12 +106,17 @@ func (r *BlogRepository) DeleteBlog(blogID string) error {
 	id, err := primitive.ObjectIDFromHex(blogID)
 	if err != nil {
 		log.Printf("Invalid blog ID: %v", err)
+		return err
 	}
 	filter := bson.M{"_id": id}
-	_, err = r.BlogCollection.DeleteOne(ctx, filter)
+	result, err := r.BlogCollection.DeleteOne(ctx, filter)
 	if err != nil {
 		log.Printf("Error deleting blog: %v", err)
 		return err
+	}
+	if result.DeletedCount == 0 {
+		log.Printf("Blog not found with ID: %s", blogID)
+		return mongo.ErrNoDocuments
 	}
 	return nil
 }
@@ -159,8 +153,9 @@ func (r *BlogRepository) SearchBlogs(query string) ([]domain.Blog, error) {
 func (r *BlogRepository) FilterBlogs(tags []string, dateRange [2]string, sortBy string) ([]domain.Blog, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	filter := bson.M{
-		"tags": bson.M{"$in": tags},
+	filter := bson.M{}
+	if len(tags) > 0 {
+		filter["tags"] = bson.M{"$in": tags}
 	}
 	if dateRange[0] != "" && dateRange[1] != "" {
 		startDate, err := time.Parse(time.RFC3339, dateRange[0])
@@ -180,11 +175,7 @@ func (r *BlogRepository) FilterBlogs(tags []string, dateRange [2]string, sortBy 
 	}
 	options := options.Find()
 	if sortBy != "" {
-		if sortBy == "popularity" {
-			options.SetSort(bson.M{"popularity.views": -1})
-		} else if sortBy == "date" {
-			options.SetSort(bson.M{"created_at": -1})
-		}
+		options.SetSort(bson.M{sortBy: -1})
 	}
 
 	cursor, err := r.BlogCollection.Find(ctx, filter, options)
@@ -202,7 +193,6 @@ func (r *BlogRepository) FilterBlogs(tags []string, dateRange [2]string, sortBy 
 		}
 		blogs = append(blogs, blog)
 	}
-
 	return blogs, nil
 }
 
