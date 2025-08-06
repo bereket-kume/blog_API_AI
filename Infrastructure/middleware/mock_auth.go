@@ -1,4 +1,3 @@
-// Inside your middleware/mock.go file
 package middleware
 
 import (
@@ -8,9 +7,9 @@ import (
 
 func MockAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Use an email that DOES NOT exist in your database for this test.
-		c.Set("user_id", primitive.NewObjectID())
-		c.Set("email", "nonexistentuser@example.com")
+		userID, _ := primitive.ObjectIDFromHex("6893b95f2f0bd5cf28b04d01")
+		c.Set("user_id", userID)
+		c.Set("email", "realuser@example.com") // Replace with the actual email in your DB
 		c.Next()
 	}
 }
