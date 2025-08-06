@@ -74,21 +74,32 @@ func (ctrl *UserController) RefreshToken(c *gin.Context) {
 }
 
 // PUT /promote/:email
-func (ctrl *UserController) Promote(c *gin.Context) {
-	email := c.Param("email")
-	if err := ctrl.userUC.Promote(email); err != nil {
+func (uc *UserController) Promote(c *gin.Context) {
+	var req EmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err := uc.userUC.Promote(req.Email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "User promoted successfully"})
 }
 
-// PUT /demote/:email
-func (ctrl *UserController) Demote(c *gin.Context) {
-	email := c.Param("email")
-	if err := ctrl.userUC.Demote(email); err != nil {
+func (uc *UserController) Demote(c *gin.Context) {
+	var req EmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err := uc.userUC.Demote(req.Email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "User demoted successfully"})
 }

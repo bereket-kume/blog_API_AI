@@ -18,20 +18,17 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, tokenServi
 	r.POST("/login", userController.Login)
 	r.POST("/refresh", userController.RefreshToken)
 
-	// Protected routes
-	auth := r.Group("/api")
+	// Protected routes under /api
+	api := r.Group("/api")
 	{
+		// Promote (admin or superadmin)
+		api.POST("/promote/:email",
+			middlewares.AuthMiddleware(tokenService, "admin", "superadmin"),
+			userController.Promote)
 
-		// Admin-only routes
-		admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin"))
-		{
-			admin.POST("/promote/:email", userController.Promote)
-		}
-
-		// Superadmin-only routes
-		super := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
-		{
-			super.POST("/demote/:email", userController.Demote)
-		}
+		// Demote (superadmin only)
+		api.POST("/demote/:email",
+			middlewares.AuthMiddleware(tokenService, "superadmin"),
+			userController.Demote)
 	}
 }
