@@ -7,16 +7,13 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Documentation
+README.md
+SETUP.md
 
 # IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+.vscode
+.idea
 
 # OS
 .DS_Store
@@ -25,18 +22,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Build artifacts
-bin/
-dist/
-
-# Test files
-*_test.go
-test/
-
-# Documentation
-README.md
-*.md
-
 # Temporary files
-tmp/
-temp/ 
+*.tmp
+*.temp 
