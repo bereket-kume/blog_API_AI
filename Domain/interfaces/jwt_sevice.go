@@ -9,6 +9,8 @@ type TokenService interface {
 	GenerateRefreshToken(userID, email, role string) (*models.Token, error)
 	VerifyAccessToken(tokenStr string) (*models.UserAccessClaims, error)
 	VerifyRefreshToken(tokenStr string) (*models.UserRefreshClaims, error)
+	HashToken(token string) string
+	VerifyToken(hashed, token string) bool
 }
 type TokenRepository interface {
 	CreateToken(token *models.Token) error

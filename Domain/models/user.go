@@ -1,11 +1,10 @@
 package models
 
 type User struct {
-	ID          string
-	Username    string
-	Email       string
-	Password    string
-	Role        string
-	Verified    bool
-	Promoted_by string
+	ID       string
+	Username string
+	Email    string
+	Password string
+	Role     string
+	Verified bool
 }

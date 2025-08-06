@@ -25,7 +25,7 @@ func TestUserMongoRepo(t *testing.T) {
 		}
 
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
-		err := repo.Insert(user)
+		err := repo.Insert(&user)
 		assert.NoError(mt, err)
 	})
 	m.Run("FindByEmail", func(mt *mtest.T) {

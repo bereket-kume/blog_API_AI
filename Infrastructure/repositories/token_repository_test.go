@@ -25,7 +25,7 @@ func TestTokenMongoRepo(t *testing.T) {
 		}
 
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
-		err := repo.CreateToken(token)
+		err := repo.CreateToken(&token)
 		assert.NoError(mt, err)
 	})
 	m.Run("FindByID", func(mt *mtest.T) {
@@ -72,7 +72,7 @@ func TestTokenMongoRepo(t *testing.T) {
 
 		mt.AddMockResponses(mtest.CreateSuccessResponse()) // mock successful update
 
-		err := repo.Update(token)
+		err := repo.Update(&token)
 
 		assert.NoError(t, err)
 

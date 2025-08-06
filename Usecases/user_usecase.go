@@ -64,7 +64,7 @@ func (uc *userUsecase) RefreshToken(tokenStr string) (string, error) {
 	}
 
 	// 4️⃣ Verify stored hashed token matches the raw token string
-	if !uc.hasher.VerifyPassword(dbToken.Token, tokenStr) {
+	if !uc.tokenService.VerifyToken(dbToken.Token, tokenStr) {
 		return "", errors.New("invalid refresh token")
 	}
 
@@ -89,7 +89,10 @@ func (uc *userUsecase) Register(user models.User) error {
 		return errors.New("minimum length of password")
 	}
 
-	hashed_pw := uc.hasher.HashPassword(user.Password)
+	hashed_pw, err := uc.hasher.HashPassword(user.Password)
+	if err != nil {
+		return err
+	}
 	user.Password = hashed_pw
 	num, err := uc.repo.CountUsers()
 	if err != nil {
@@ -100,8 +103,8 @@ func (uc *userUsecase) Register(user models.User) error {
 	} else {
 		user.Role = "user"
 	}
-	user.Promoted_by = "null"
-	err = uc.repo.Insert(user)
+	user.Verified = true //for time
+	err = uc.repo.Insert(&user)
 	return err
 
 }
@@ -128,10 +131,11 @@ func (uc *userUsecase) Login(user models.User) (OutPutToken, error) {
 	if err != nil {
 		return OutPutToken{}, err
 	}
-	refresh_token.Token = uc.hasher.HashPassword(refresh_token.Token)
+	refresh_tokenStr := refresh_token.Token
+	refresh_token.Token = uc.tokenService.HashToken(refresh_token.Token)
 	uc.tokenRepo.CreateToken(refresh_token)
 
-	return OutPutToken{access_token, refresh_token.Token}, err
+	return OutPutToken{access_token, refresh_tokenStr}, err
 }
 
 func (uc *userUsecase) Promote(email string) error {

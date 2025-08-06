@@ -15,8 +15,8 @@ type Token struct {
 	Device    string    `bson:"device"`
 }
 
-func FromDomainToken(token models.Token) Token {
-	return Token{
+func FromDomainToken(token *models.Token) *Token {
+	return &Token{
 		ID:        token.ID,
 		UserID:    token.UserID,
 		TokenHash: token.Token,
@@ -27,8 +27,8 @@ func FromDomainToken(token models.Token) Token {
 	}
 }
 
-func ToDomainToken(token Token) models.Token {
-	return models.Token{
+func ToDomainToken(token *Token) *models.Token {
+	return &models.Token{
 		ID:        token.ID,
 		UserID:    token.UserID,
 		Token:     token.TokenHash,

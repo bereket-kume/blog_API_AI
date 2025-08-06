@@ -10,15 +10,15 @@ type UserRepository struct {
 	mock.Mock
 }
 
-func (m *UserRepository) Insert(user models.User) error {
+func (m *UserRepository) Insert(user *models.User) error {
 	args := m.Called(user)
 	return args.Error(0)
 }
 
-func (m *UserRepository) FindByEmail(email string) (models.User, error) {
+func (m *UserRepository) FindByEmail(email string) (*models.User, error) {
 	args := m.Called(email)
 	user, _ := args.Get(0).(models.User)
-	return user, args.Error(1)
+	return &user, args.Error(1)
 }
 
 func (m *UserRepository) UpdatePass(email, passowrdHash string) error {

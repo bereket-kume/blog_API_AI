@@ -2,6 +2,8 @@ package services
 
 import (
 	"blog-api/Domain/models"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -110,4 +112,13 @@ func (j *JWTService) VerifyRefreshToken(tokenStr string) (*models.UserRefreshCla
 		CreatedAt: time.Unix(iatUnix, 0),
 	}, nil
 
+}
+
+func (j *JWTService) HashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+func (j *JWTService) VerifyToken(hashed, token string) bool {
+	return hashed == j.HashToken(token)
 }

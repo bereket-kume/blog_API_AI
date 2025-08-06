@@ -14,8 +14,8 @@ type UserModel struct {
 	Verified     bool   `bson:"verified"`
 }
 
-func FromDomainUser(u models.User) UserModel {
-	return UserModel{
+func FromDomainUser(u *models.User) *UserModel {
+	return &UserModel{
 		ID:           u.ID,
 		Username:     u.Username,
 		Email:        u.Email,
@@ -25,8 +25,8 @@ func FromDomainUser(u models.User) UserModel {
 	}
 }
 
-func ToDomainUser(m UserModel) models.User {
-	return models.User{
+func ToDomainUser(m *UserModel) *models.User {
+	return &models.User{
 		ID:       m.ID,
 		Username: m.Username,
 		Email:    m.Email,
