@@ -1,33 +1,57 @@
 package main
 
 import (
-	"blog-api/Delivery/controllers"
 	"blog-api/Delivery/routers"
 	"blog-api/Infrastructure/database"
 	"blog-api/Infrastructure/repositories"
-	usecases "blog-api/Usecases"
+	"blog-api/Infrastructure/services"
+	"blog-api/usecases"
+	"log"
+	"os"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load env vars (optional if you already set MONGODB_URI before running)
 	godotenv.Load()
-	mongo, err := database.ConnectDB()
-	if err != nil {
-		panic(err)
+
+	// Connect to MongoDB
+	if err := database.Connect(); err != nil {
+		log.Fatal("Database connection failed:", err)
 	}
+	defer database.Disconnect()
 
-	// dbName := os.Getenv("DB_NAME")
+	// === Config ===
+	accessSecret := os.Getenv("ACCESS_SECRET")
+	if accessSecret == "" {
+		accessSecret = "supersecretkey"
+	}
+	refreshSecret := os.Getenv("REFRESH_SECRET")
+	if refreshSecret == "" {
+		refreshSecret = "anothersecretkey"
+	}
+	accessTTL := time.Minute * 15
+	refreshTTL := time.Hour * 24 * 7
 
-	blogCollection := mongo.GetCollection("blog_db", "blogs")
+	// === Infrastructure Layer ===
+	userRepo := repositories.NewUserMongoRepo(database.GetCollection("users"))
+	tokenRepo := repositories.NewTokenMongoRepo(database.GetCollection("tokens"))
 
-	blogRepo := repositories.NewBlogRepository(blogCollection)
+	hasher := services.BcryptHasher{}
+	jwtService := services.NewJWTService(accessSecret, refreshSecret, accessTTL, refreshTTL)
 
-	blogUseCase := usecases.NewBlogUseCase(blogRepo)
+	// === Usecases ===
+	userUC := usecases.NewUserUsecase(userRepo, hasher, jwtService, tokenRepo)
 
-	blogController := controllers.NewBlogController(blogUseCase)
+	// === Setup Router ===
+	r := gin.Default()
+	routers.SetupRouter(r, userUC, jwtService)
 
-	r := routers.SetupRoutes(blogController)
-	r.Run(":8080")
-
+	// === Run Server ===
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal("Failed to run server:", err)
+	}
 }

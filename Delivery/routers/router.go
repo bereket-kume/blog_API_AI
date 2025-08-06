@@ -2,28 +2,36 @@ package routers
 
 import (
 	"blog-api/Delivery/controllers"
+	"blog-api/Delivery/middlewares"
+	"blog-api/Domain/interfaces"
+	"blog-api/usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(blogController *controllers.BlogController) *gin.Engine {
-	router := gin.Default()
+func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, tokenService interfaces.TokenService) {
+	// Controllers
+	userController := controllers.NewUserController(userUC)
 
-	// Blog routes
-	blogs := router.Group("/blogs")
+	// Public routes
+	r.POST("/register", userController.Register)
+	r.POST("/login", userController.Login)
+	r.POST("/refresh", userController.RefreshToken)
+
+	// Protected routes
+	auth := r.Group("/api")
 	{
-		blogs.POST("/", blogController.CreateBlog)                 // Create a new blog
-		blogs.GET("/", blogController.GetAllBlogs)                 // Get all blogs with pagination
-		blogs.GET("/search", blogController.SearchBlogs)           // Search blogs
-		blogs.GET("/filter", blogController.FilterBlogs)           // Filter blogs by tags, date, etc.
-		blogs.GET("/:id", blogController.GetBlogByID)              // Get blog by ID
-		blogs.PUT("/:id", blogController.UpdateBlog)               // Update blog
-		blogs.DELETE("/:id", blogController.DeleteBlog)            // Delete blog
-		blogs.POST("/:id/likes", blogController.UpdateLikes)       // Update likes
-		blogs.POST("/:id/dislikes", blogController.UpdateDislikes) // Update dislikes
-		blogs.POST("/:id/comments", blogController.AddComment)     // Add comment to blog
-		blogs.GET("/:id/comments", blogController.GetComments)     // Get comments for blog
-	}
 
-	return router
+		// Admin-only routes
+		admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin"))
+		{
+			admin.POST("/promote/:email", userController.Promote)
+		}
+
+		// Superadmin-only routes
+		super := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
+		{
+			super.POST("/demote/:email", userController.Demote)
+		}
+	}
 }
