@@ -93,70 +93,69 @@ func TestTokenMongoRepo(t *testing.T) {
 // 	"blog-api/Domain/models"
 // 	"context"
 // 	"testing"
+// 	"time"
 
 // 	"github.com/stretchr/testify/assert"
 // 	mongodriver "go.mongodb.org/mongo-driver/mongo"
 // 	"go.mongodb.org/mongo-driver/mongo/options"
 // )
 
-// func setupTestDB(t *testing.T) (*mongodriver.Client, *mongodriver.Collection, func()) {
-// 	// Connect to MongoDB running in Docker
+// func setupTokenTestDB(t *testing.T) (*mongodriver.Client, *mongodriver.Collection, func()) {
 // 	clientOpts := options.Client().ApplyURI("mongodb://localhost:27017")
 // 	client, err := mongodriver.Connect(context.TODO(), clientOpts)
 // 	assert.NoError(t, err)
 
 // 	db := client.Database("testdb")
-// 	collection := db.Collection("users_test")
+// 	collection := db.Collection("tokens_test")
 
-// 	// Cleanup function
 // 	cleanup := func() {
-// 		_ = collection.Drop(context.TODO()) // Drop the collection
+// 		_ = collection.Drop(context.TODO())
 // 		_ = client.Disconnect(context.TODO())
 // 	}
 
 // 	return client, collection, cleanup
 // }
-// func TestMongoRepo(t *testing.T) {
-// 	_, collection, cleanup := setupTestDB(t)
-// 	defer cleanup() // Runs after all tests in this function
 
-// 	repo := NewUserMongoRepo(collection)
+// func TestTokenMongoRepo(t *testing.T) {
+// 	_, collection, cleanup := setupTokenTestDB(t)
+// 	defer cleanup()
 
-// 	user := models.User{
-// 		ID:       "507f1f77bcf86cd799439011",
-// 		Username: "testuser",
-// 		Email:    "test1@example.com",
-// 		Password: "pass",
-// 		Role:     "user",
-// 		Verified: false,
+// 	repo := NewTokenMongoRepo(collection)
+
+// 	token := &models.Token{
+// 		ID:        "507f1f77bcf86cd799439011",
+// 		UserID:    "testuser",
+// 		Token:     "token-string",
+// 		CreatedAt: time.Now(),
+// 		ExpiresAt: time.Now().Add(24 * time.Hour),
+// 		IP:        "123.45.67.89",
+// 		Device:    "Chrome on Windows",
 // 	}
 
-// 	err := repo.Insert(user)
+// 	// ---- Create ----
+// 	err := repo.CreateToken(token)
 // 	assert.NoError(t, err)
 
-// 	foundUser, err := repo.FindByEmail("test1@example.com")
+// 	// ---- Get ----
+// 	foundToken, err := repo.GetToken(token.ID)
 // 	assert.NoError(t, err)
-// 	assert.Equal(t, user.Email, foundUser.Email)
+// 	assert.Equal(t, token.UserID, foundToken.UserID)
+// 	assert.Equal(t, token.Token, foundToken.Token)
 
-// 	err = repo.UpdatePass("test1@example.com", "changed_pass")
-// 	assert.NoError(t, err)
-
-// 	updatedUser, err := repo.FindByEmail("test1@example.com")
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, "changed_pass", updatedUser.Password)
-
-// 	err = repo.UpdateRole("test1@example.com", "admin")
+// 	// ---- Update ----
+// 	token.Token = "updated-token"
+// 	err = repo.Update(token)
 // 	assert.NoError(t, err)
 
-// 	updatedUser, err = repo.FindByEmail("test1@example.com")
+// 	updatedToken, err := repo.GetToken(token.ID)
 // 	assert.NoError(t, err)
-// 	assert.Equal(t, "admin", updatedUser.Role)
+// 	assert.Equal(t, "updated-token", updatedToken.Token)
 
-// 	err = repo.Verify("test1@example.com")
+// 	// ---- Delete ----
+// 	err = repo.DeleteToken(token.ID)
 // 	assert.NoError(t, err)
 
-// 	verifiedUser, err := repo.FindByEmail("test1@example.com")
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, true, verifiedUser.Verified)
-
+// 	// Ensure it’s deleted
+// 	_, err = repo.GetToken(token.ID)
+// 	assert.Error(t, err)
 // }
