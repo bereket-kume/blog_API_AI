@@ -6,8 +6,9 @@ import (
 	"blog-api/Infrastructure/utils"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"github.com/gin-gonic/gin"
 )
 
 var userUsecase interfaces.UserUsecase
@@ -19,8 +20,17 @@ func InitUserController(u interfaces.UserUsecase) {
 
 // Handler to update user profile
 func UpdateUserProfile(c *gin.Context) {
-	// TODO: Replace with actual user ID from auth middleware
-	userID, _ := primitive.ObjectIDFromHex("64eabf5b17c2f7e8b9cc6e9a")
+	userIDRaw, exists := c.Get("userID")
+	if !exists {
+		utils.SendError(c, http.StatusUnauthorized, "User ID not found")
+		return
+	}
+
+	userID, ok := userIDRaw.(primitive.ObjectID)
+	if !ok {
+		utils.SendError(c, http.StatusUnauthorized, "Invalid user ID format")
+		return
+	}
 
 	var input models.User
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -39,8 +49,17 @@ func UpdateUserProfile(c *gin.Context) {
 
 // Handler to fetch user profile
 func GetUserProfile(c *gin.Context) {
-	// TODO: Replace with actual user ID from auth middleware
-	userID, _ := primitive.ObjectIDFromHex("6893b95f2f0bd5cf28b04d01")
+	userIDRaw, exists := c.Get("userID")
+	if !exists {
+		utils.SendError(c, http.StatusUnauthorized, "User ID not found")
+		return
+	}
+
+	userID, ok := userIDRaw.(primitive.ObjectID)
+	if !ok {
+		utils.SendError(c, http.StatusUnauthorized, "Invalid user ID format")
+		return
+	}
 
 	user, err := userUsecase.GetProfile(c.Request.Context(), userID)
 	if err != nil {
