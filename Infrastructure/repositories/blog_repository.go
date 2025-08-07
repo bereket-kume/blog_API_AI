@@ -21,11 +21,30 @@ func NewBlogMongoRepo(col *mongo.Collection) *blogMongoRepo {
 
 // CreateBlog creates a new blog post
 func (br *blogMongoRepo) CreateBlog(blog models.Blog) (models.Blog, error) {
-	blog.ID = primitive.NewObjectID()
+	// Generate a new ObjectID for MongoDB
+	objectID := primitive.NewObjectID()
+	blog.ID = objectID.Hex()
 	blog.CreatedAt = time.Now()
 	blog.UpdatedAt = time.Now()
 
-	_, err := br.collection.InsertOne(context.TODO(), blog)
+	// Convert to MongoDB model for insertion
+	blogModel := bson.M{
+		"_id":          objectID,
+		"title":        blog.Title,
+		"content":      blog.Content,
+		"author_id":    blog.AuthorID,
+		"author_name":  blog.AuthorName,
+		"tags":         blog.Tags,
+		"view_count":   blog.ViewCount,
+		"likes":        blog.Likes,
+		"dislikes":     blog.Dislikes,
+		"comments":     blog.Comments,
+		"is_published": blog.IsPublished,
+		"created_at":   blog.CreatedAt,
+		"updated_at":   blog.UpdatedAt,
+	}
+
+	_, err := br.collection.InsertOne(context.TODO(), blogModel)
 	if err != nil {
 		return models.Blog{}, err
 	}
@@ -247,7 +266,9 @@ func (br *blogMongoRepo) AddComment(blogID string, comment models.Comment) (mode
 		return models.Comment{}, err
 	}
 
-	comment.ID = primitive.NewObjectID()
+	// Generate a new ObjectID for the comment
+	commentObjectID := primitive.NewObjectID()
+	comment.ID = commentObjectID.Hex()
 	comment.BlogID = blogID
 	comment.CreatedAt = time.Now()
 	comment.UpdatedAt = time.Now()

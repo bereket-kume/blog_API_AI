@@ -3,6 +3,7 @@ package usecases
 import (
 	"blog-api/Domain/interfaces"
 	"blog-api/Domain/models"
+	"context"
 	"errors"
 	"log"
 	"net/mail"
@@ -25,6 +26,8 @@ type UserUsecaseInterface interface {
 	Promote(email string) error
 	Demote(email string) error
 	RefreshToken(token string) (string, error)
+	UpdateProfile(ctx context.Context, id string, user models.User) (models.User, error)
+	GetProfile(ctx context.Context, id string) (models.User, error)
 }
 
 type userUsecase struct {

@@ -1,20 +1,17 @@
 package controllers
 
 import (
-	"blog-api/Domain/interfaces"
 	"blog-api/Domain/models"
-	"blog-api/Infrastructure/utils"
+	"blog-api/usecases"
 	"net/http"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gin-gonic/gin"
 )
 
-var userUsecase interfaces.UserUsecase
+var userUsecase usecases.UserUsecaseInterface
 
 // This function initializes the controller with a usecase implementation
-func InitUserController(u interfaces.UserUsecase) {
+func InitUserController(u usecases.UserUsecaseInterface) {
 	userUsecase = u
 }
 
@@ -22,50 +19,50 @@ func InitUserController(u interfaces.UserUsecase) {
 func UpdateUserProfile(c *gin.Context) {
 	userIDRaw, exists := c.Get("userID")
 	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "User ID not found")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
 		return
 	}
 
-	userID, ok := userIDRaw.(primitive.ObjectID)
+	userID, ok := userIDRaw.(string)
 	if !ok {
-		utils.SendError(c, http.StatusUnauthorized, "Invalid user ID format")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 
 	var input models.User
 	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid JSON")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
 	updated, err := userUsecase.UpdateProfile(c.Request.Context(), userID, input)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, "Update failed")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Update failed"})
 		return
 	}
 
-	utils.SendSuccess(c, "Profile updated", updated)
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated", "data": updated})
 }
 
 // Handler to fetch user profile
 func GetUserProfile(c *gin.Context) {
 	userIDRaw, exists := c.Get("userID")
 	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "User ID not found")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
 		return
 	}
 
-	userID, ok := userIDRaw.(primitive.ObjectID)
+	userID, ok := userIDRaw.(string)
 	if !ok {
-		utils.SendError(c, http.StatusUnauthorized, "Invalid user ID format")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 
 	user, err := userUsecase.GetProfile(c.Request.Context(), userID)
 	if err != nil {
-		utils.SendError(c, http.StatusNotFound, "User not found")
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	utils.SendSuccess(c, "Profile fetched", user)
+	c.JSON(http.StatusOK, gin.H{"message": "Profile fetched", "data": user})
 }

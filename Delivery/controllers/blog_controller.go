@@ -409,7 +409,7 @@ func (ctrl *BlogController) blogToResponse(blog models.Blog) BlogResponse {
 	}
 
 	return BlogResponse{
-		ID:          blog.ID.Hex(),
+		ID:          blog.ID,
 		Title:       blog.Title,
 		Content:     blog.Content,
 		AuthorID:    blog.AuthorID,
@@ -427,7 +427,7 @@ func (ctrl *BlogController) blogToResponse(blog models.Blog) BlogResponse {
 
 func (ctrl *BlogController) commentToResponse(comment models.Comment) CommentResponse {
 	return CommentResponse{
-		ID:         comment.ID.Hex(),
+		ID:         comment.ID,
 		BlogID:     comment.BlogID,
 		AuthorID:   comment.AuthorID,
 		AuthorName: comment.AuthorName,

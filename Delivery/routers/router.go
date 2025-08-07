@@ -14,6 +14,9 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 	userController := controllers.NewUserController(userUC)
 	blogController := controllers.NewBlogController(blogUC)
 
+	// Initialize profile controller
+	controllers.InitUserController(userUC)
+
 	// Public routes
 	r.POST("/register", userController.Register)
 	r.POST("/login", userController.Login)
@@ -41,6 +44,13 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 			blogs.DELETE("/:id/like", blogController.UnlikeBlog)
 			blogs.POST("/:id/dislike", blogController.DislikeBlog)
 			blogs.DELETE("/:id/dislike", blogController.RemoveDislike)
+		}
+
+		// Profile routes (authenticated)
+		profile := auth.Group("/profile").Use(middlewares.AuthMiddleware(tokenService))
+		{
+			profile.GET("/", controllers.GetUserProfile)
+			profile.PUT("/", controllers.UpdateUserProfile)
 		}
 
 		// Admin-only routes

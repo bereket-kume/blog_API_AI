@@ -5,6 +5,7 @@ import (
 	"blog-api/Infrastructure/database"
 	"blog-api/Infrastructure/repositories"
 	"blog-api/Infrastructure/services"
+	"blog-api/Infrastructure/utils"
 	"blog-api/usecases"
 	"log"
 	"net/http"
@@ -16,6 +17,9 @@ import (
 )
 
 func main() {
+	// Load environment variables from .env file
+	utils.LoadEnv()
+
 	// Set Gin mode based on environment
 	if os.Getenv("ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -49,8 +53,15 @@ func main() {
 	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo)
 	blogUC := usecases.NewBlogUseCase(blogRepo)
 
-	// Create Gin router
-	r := gin.Default()
+	// Create Gin router with proper configuration
+	r := gin.New() // Use gin.New() instead of gin.Default() to avoid middleware duplication
+
+	// Add middleware manually
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+
+	// Configure proxy trust for security
+	r.SetTrustedProxies([]string{"127.0.0.1", "::1"}) // Trust only localhost
 
 	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
