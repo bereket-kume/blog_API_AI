@@ -7,51 +7,97 @@ import (
 	"blog-api/Infrastructure/services"
 	"blog-api/usecases"
 	"log"
+	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load env vars (optional if you already set MONGODB_URI before running)
-	godotenv.Load()
+	// Set Gin mode based on environment
+	if os.Getenv("ENV") == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	// Connect to MongoDB
 	if err := database.Connect(); err != nil {
-		log.Fatal("Database connection failed:", err)
+		log.Fatal("Failed to connect to MongoDB:", err)
 	}
 	defer database.Disconnect()
 
-	// === Config ===
-	accessSecret := os.Getenv("ACCESS_SECRET")
-	if accessSecret == "" {
-		accessSecret = "supersecretkey"
+	// Initialize repositories
+	userCollection := database.GetCollection("users")
+	blogCollection := database.GetCollection("blogs")
+	tokenCollection := database.GetCollection("tokens")
+
+	userRepo := repositories.NewUserMongoRepo(userCollection)
+	blogRepo := repositories.NewBlogMongoRepo(blogCollection)
+	tokenRepo := repositories.NewTokenMongoRepo(tokenCollection)
+
+	// Initialize services
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "default-secret-key-change-in-production"
 	}
-	refreshSecret := os.Getenv("REFRESH_SECRET")
-	if refreshSecret == "" {
-		refreshSecret = "anothersecretkey"
-	}
-	accessTTL := time.Minute * 15
-	refreshTTL := time.Hour * 24 * 7
 
-	// === Infrastructure Layer ===
-	userRepo := repositories.NewUserMongoRepo(database.GetCollection("users"))
-	tokenRepo := repositories.NewTokenMongoRepo(database.GetCollection("tokens"))
+	jwtService := services.NewJWTService(jwtSecret, jwtSecret, 15*time.Minute, 7*24*time.Hour)
+	passwordService := &services.BcryptHasher{}
 
-	hasher := services.BcryptHasher{}
-	jwtService := services.NewJWTService(accessSecret, refreshSecret, accessTTL, refreshTTL)
+	// Initialize use cases
+	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo)
+	blogUC := usecases.NewBlogUseCase(blogRepo)
 
-	// === Usecases ===
-	userUC := usecases.NewUserUsecase(userRepo, hasher, jwtService, tokenRepo)
-
-	// === Setup Router ===
+	// Create Gin router
 	r := gin.Default()
-	routers.SetupRouter(r, userUC, jwtService)
 
-	// === Run Server ===
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Failed to run server:", err)
+	// Add CORS middleware
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
+
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
+			"message": "Blog API is running",
+		})
+	})
+
+	// Root endpoint
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Welcome to Blog API with AI",
+			"version": "1.0.0",
+		})
+	})
+
+	// Setup routes
+	routers.SetupRouter(r, userUC, blogUC, jwtService)
+
+	// Get port from environment or use default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	// Validate port
+	if _, err := strconv.Atoi(port); err != nil {
+		log.Fatal("Invalid PORT environment variable")
+	}
+
+	log.Printf("Server starting on port %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
 }
