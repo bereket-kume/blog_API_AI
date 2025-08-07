@@ -66,6 +66,7 @@ func (j *JWTService) GenerateRefreshToken(userID, email, role string) (*models.T
 	return &models.Token{
 		ID:        tokenID,
 		Token:     signed,
+		Email:     email,
 		ExpiresAt: exp,
 		CreatedAt: iat,
 		UserID:    userID,
@@ -112,6 +113,45 @@ func (j *JWTService) VerifyRefreshToken(tokenStr string) (*models.UserRefreshCla
 		CreatedAt: time.Unix(iatUnix, 0),
 	}, nil
 
+}
+
+func (j *JWTService) GenerateRandomJWT(expiredAt time.Duration) (*models.Token, error) {
+	tokenId := uuid.New().String()
+	exp := time.Now().Add(expiredAt)
+	claims := jwt.MapClaims{
+		"token_id": tokenId,
+		"exp":      exp.Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString([]byte(j.accessSecretKey))
+	if err != nil {
+		return nil, err
+	}
+	return &models.Token{
+		ID:        tokenId,
+		Token:     signed,
+		ExpiresAt: exp,
+		CreatedAt: time.Now(),
+	}, nil
+}
+
+func (s *JWTService) VerifyJWT(tokenStr string) (models.TokenClaims, error) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.accessSecretKey), nil
+	})
+	if err != nil || !token.Valid {
+		return models.TokenClaims{}, errors.New("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return models.TokenClaims{}, errors.New("invalid claims")
+	}
+	newclaims := models.TokenClaims{
+		TokenID:   claims["token_id"].(string),
+		ExpiresAt: time.Unix(int64(claims["exp"].(float64)), 0),
+	}
+	return newclaims, nil
 }
 
 func (j *JWTService) HashToken(token string) string {
