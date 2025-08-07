@@ -2,36 +2,26 @@ package routers
 
 import (
 	"blog-api/Delivery/controllers"
-	"blog-api/Delivery/middlewares"
-	"blog-api/Domain/interfaces"
-	"blog-api/usecases"
+	"blog-api/Infrastructure/middleware"
+	"blog-api/Infrastructure/repositories"
+	usecases "blog-api/Usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, tokenService interfaces.TokenService) {
-	// Controllers
-	userController := controllers.NewUserController(userUC)
+func SetupRouter() *gin.Engine {
+	router := gin.Default()
 
-	// Public routes
-	r.POST("/register", userController.Register)
-	r.POST("/login", userController.Login)
-	r.POST("/refresh", userController.RefreshToken)
+	userRepo := repositories.NewUserRepository()
+	userUsecase := usecases.NewUserUsecase(userRepo)
+	controllers.InitUserController(userUsecase)
 
-	// Protected routes
-	auth := r.Group("/api")
+	user := router.Group("/user")
+	user.Use(middleware.MockAuth())
 	{
-
-		// Admin-only routes
-		admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin"))
-		{
-			admin.POST("/promote/:email", userController.Promote)
-		}
-
-		// Superadmin-only routes
-		super := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
-		{
-			super.POST("/demote/:email", userController.Demote)
-		}
+		user.GET("/profile", controllers.GetUserProfile)
+		user.PUT("/profile", controllers.UpdateUserProfile)
 	}
+
+	return router
 }
