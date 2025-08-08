@@ -1,0 +1,2794 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>controllers: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">blog-api/Delivery/controllers/blog_controller.go (71.6%)</option>
+				
+				<option value="file1">blog-api/Delivery/controllers/profile_user_controller.go (0.0%)</option>
+				
+				<option value="file2">blog-api/Delivery/controllers/user_controller.go (0.0%)</option>
+				
+				<option value="file3">blog-api/Delivery/main.go (0.0%)</option>
+				
+				<option value="file4">blog-api/Delivery/middlewares/auth_middleware.go (0.0%)</option>
+				
+				<option value="file5">blog-api/Delivery/routers/router.go (0.0%)</option>
+				
+				<option value="file6">blog-api/Infrastructure/database/mongo.go (0.0%)</option>
+				
+				<option value="file7">blog-api/Infrastructure/db_models/token_db_model.go (100.0%)</option>
+				
+				<option value="file8">blog-api/Infrastructure/db_models/user_db_model.go (100.0%)</option>
+				
+				<option value="file9">blog-api/Infrastructure/repositories/blog_repository.go (75.7%)</option>
+				
+				<option value="file10">blog-api/Infrastructure/repositories/profile_user_repository.go (0.0%)</option>
+				
+				<option value="file11">blog-api/Infrastructure/repositories/token_repository.go (83.3%)</option>
+				
+				<option value="file12">blog-api/Infrastructure/repositories/user_repository.go (57.8%)</option>
+				
+				<option value="file13">blog-api/Infrastructure/services/jwt_service.go (85.3%)</option>
+				
+				<option value="file14">blog-api/Infrastructure/services/password_service.go (100.0%)</option>
+				
+				<option value="file15">blog-api/Infrastructure/utils/env_loader.go (0.0%)</option>
+				
+				<option value="file16">blog-api/Infrastructure/utils/profile_response.go (0.0%)</option>
+				
+				<option value="file17">blog-api/mocks/blog_repository_mock.go (100.0%)</option>
+				
+				<option value="file18">blog-api/mocks/blog_usecase_mock.go (90.6%)</option>
+				
+				<option value="file19">blog-api/mocks/jwt_repository_mock.go (0.0%)</option>
+				
+				<option value="file20">blog-api/mocks/jwt_service_mock.go (0.0%)</option>
+				
+				<option value="file21">blog-api/mocks/password_hasher_mock.go (0.0%)</option>
+				
+				<option value="file22">blog-api/mocks/user_repository_mock.go (0.0%)</option>
+				
+				<option value="file23">blog-api/test_config.go (0.0%)</option>
+				
+				<option value="file24">blog-api/test_helpers.go (0.0%)</option>
+				
+				<option value="file25">blog-api/usecases/blog_usecase.go (100.0%)</option>
+				
+				<option value="file26">blog-api/usecases/profile_user_usecase.go (0.0%)</option>
+				
+				<option value="file27">blog-api/usecases/user_usecase.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package controllers
+
+import (
+        "blog-api/Domain/models"
+        "blog-api/usecases"
+        "net/http"
+        "strconv"
+        "time"
+
+        "github.com/gin-gonic/gin"
+)
+
+type BlogController struct {
+        blogUC usecases.BlogUseCase
+}
+
+func NewBlogController(blogUC usecases.BlogUseCase) *BlogController <span class="cov8" title="1">{
+        return &amp;BlogController{blogUC: blogUC}
+}</span>
+
+func (ctrl *BlogController) CreateBlog(c *gin.Context) <span class="cov8" title="1">{
+        var req CreateBlogRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userID, exists := c.Get("userID")
+        if !exists </span><span class="cov8" title="1">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">authorName, exists := c.Get("email")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">blog := models.Blog{
+                Title:       req.Title,
+                Content:     req.Content,
+                AuthorID:    userID.(string),
+                AuthorName:  authorName.(string),
+                Tags:        req.Tags,
+                IsPublished: req.IsPublished,
+                ViewCount:   0,
+                Likes:       0,
+                Dislikes:    0,
+                Comments:    []models.Comment{},
+        }
+
+        createdBlog, err := ctrl.blogUC.CreateBlog(blog)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := ctrl.blogToResponse(createdBlog)
+        c.JSON(http.StatusCreated, response)</span>
+}
+
+// GET /blogs - Get paginated blogs
+func (ctrl *BlogController) GetPaginatedBlogs(c *gin.Context) <span class="cov8" title="1">{
+        pageStr := c.DefaultQuery("page", "1")
+        limitStr := c.DefaultQuery("limit", "10")
+
+        page, err := strconv.Atoi(pageStr)
+        if err != nil || page &lt; 1 </span><span class="cov0" title="0">{
+                page = 1
+        }</span>
+
+        <span class="cov8" title="1">limit, err := strconv.Atoi(limitStr)
+        if err != nil || limit &lt; 1 || limit &gt; 100 </span><span class="cov0" title="0">{
+                limit = 10
+        }</span>
+
+        <span class="cov8" title="1">blogs, err := ctrl.blogUC.GetPaginatedBlogs(page, limit)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">var blogResponses []BlogResponse
+        for _, blog := range blogs </span><span class="cov8" title="1">{
+                blogResponses = append(blogResponses, ctrl.blogToResponse(blog))
+        }</span>
+
+        <span class="cov8" title="1">response := PaginatedBlogsResponse{
+                Blogs:      blogResponses,
+                Page:       page,
+                Limit:      limit,
+                Total:      int64(len(blogs)),
+                TotalPages: (len(blogs) + limit - 1) / limit,
+        }
+
+        c.JSON(http.StatusOK, response)</span>
+}
+
+func (ctrl *BlogController) GetBlogByID(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">blog, err := ctrl.blogUC.GetBlogByID(blogID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusNotFound, gin.H{"error": "Blog not found"})
+                return
+        }</span>
+
+        // Increment view count
+        <span class="cov8" title="1">go func() </span><span class="cov8" title="1">{
+                ctrl.blogUC.IncrementViewCount(blogID)
+        }</span>()
+
+        <span class="cov8" title="1">response := ctrl.blogToResponse(blog)
+        c.JSON(http.StatusOK, response)</span>
+}
+
+// PUT /blogs/:id - Update blog
+func (ctrl *BlogController) UpdateBlog(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">var req UpdateBlogRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        // Get existing blog
+        <span class="cov8" title="1">existingBlog, err := ctrl.blogUC.GetBlogByID(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{"error": "Blog not found"})
+                return
+        }</span>
+
+        // Check if user is the author
+        <span class="cov8" title="1">userID, exists := c.Get("userID")
+        if !exists || userID.(string) != existingBlog.AuthorID </span><span class="cov8" title="1">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "You can only update your own blogs"})
+                return
+        }</span>
+
+        // Update fields
+        <span class="cov8" title="1">if req.Title != "" </span><span class="cov8" title="1">{
+                existingBlog.Title = req.Title
+        }</span>
+        <span class="cov8" title="1">if req.Content != "" </span><span class="cov8" title="1">{
+                existingBlog.Content = req.Content
+        }</span>
+        <span class="cov8" title="1">if req.Tags != nil </span><span class="cov8" title="1">{
+                existingBlog.Tags = req.Tags
+        }</span>
+        <span class="cov8" title="1">if req.IsPublished != nil </span><span class="cov8" title="1">{
+                existingBlog.IsPublished = *req.IsPublished
+        }</span>
+
+        <span class="cov8" title="1">updatedBlog, err := ctrl.blogUC.UpdateBlog(existingBlog)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := ctrl.blogToResponse(updatedBlog)
+        c.JSON(http.StatusOK, response)</span>
+}
+
+// DELETE /blogs/:id - Delete blog
+func (ctrl *BlogController) DeleteBlog(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        // Get existing blog to check ownership
+        <span class="cov8" title="1">existingBlog, err := ctrl.blogUC.GetBlogByID(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{"error": "Blog not found"})
+                return
+        }</span>
+
+        // Check if user is the author
+        <span class="cov8" title="1">userID, exists := c.Get("userID")
+        if !exists || userID.(string) != existingBlog.AuthorID </span><span class="cov8" title="1">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own blogs"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">err = ctrl.blogUC.DeleteBlog(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "Blog deleted successfully"})</span>
+}
+
+// GET /blogs/search - Search blogs
+func (ctrl *BlogController) SearchBlogs(c *gin.Context) <span class="cov8" title="1">{
+        query := c.Query("q")
+        if query == "" </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Search query is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">blogs, err := ctrl.blogUC.SearchBlogs(query)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">var blogResponses []BlogResponse
+        for _, blog := range blogs </span><span class="cov8" title="1">{
+                blogResponses = append(blogResponses, ctrl.blogToResponse(blog))
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"blogs": blogResponses, "query": query})</span>
+}
+
+// GET /blogs/filter - Filter blogs
+func (ctrl *BlogController) FilterBlogs(c *gin.Context) <span class="cov8" title="1">{
+        tags := c.QueryArray("tags")
+        dateRange := c.QueryArray("dateRange")
+        sortBy := c.DefaultQuery("sortBy", "created_at")
+
+        var dateRangeArray [2]string
+        if len(dateRange) &gt;= 2 </span><span class="cov8" title="1">{
+                dateRangeArray[0] = dateRange[0]
+                dateRangeArray[1] = dateRange[1]
+        }</span>
+
+        <span class="cov8" title="1">blogs, err := ctrl.blogUC.FilterBlogs(tags, dateRangeArray, sortBy)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">var blogResponses []BlogResponse
+        for _, blog := range blogs </span><span class="cov8" title="1">{
+                blogResponses = append(blogResponses, ctrl.blogToResponse(blog))
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"blogs": blogResponses})</span>
+}
+
+// POST /blogs/:id/view - Increment view count
+func (ctrl *BlogController) IncrementViewCount(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">err := ctrl.blogUC.IncrementViewCount(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "View count incremented"})</span>
+}
+
+// POST /blogs/:id/like - Like blog
+func (ctrl *BlogController) LikeBlog(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">err := ctrl.blogUC.UpdateLikes(blogID, true)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "Blog liked successfully"})</span>
+}
+
+// DELETE /blogs/:id/like - Unlike blog
+func (ctrl *BlogController) UnlikeBlog(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">err := ctrl.blogUC.UpdateLikes(blogID, false)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "Blog unliked successfully"})</span>
+}
+
+// POST /blogs/:id/dislike - Dislike blog
+func (ctrl *BlogController) DislikeBlog(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">err := ctrl.blogUC.UpdateDislikes(blogID, true)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "Blog disliked successfully"})</span>
+}
+
+// DELETE /blogs/:id/dislike - Remove dislike
+func (ctrl *BlogController) RemoveDislike(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">err := ctrl.blogUC.UpdateDislikes(blogID, false)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "Blog dislike removed successfully"})</span>
+}
+
+// POST /blogs/:id/comments - Add comment
+func (ctrl *BlogController) AddComment(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">var req CommentRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        // Get user info from context
+        <span class="cov8" title="1">userID, exists := c.Get("userID")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">authorName, exists := c.Get("email")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">comment := models.Comment{
+                BlogID:     blogID,
+                AuthorID:   userID.(string),
+                AuthorName: authorName.(string),
+                Content:    req.Content,
+        }
+
+        createdComment, err := ctrl.blogUC.AddComment(blogID, comment)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := ctrl.commentToResponse(createdComment)
+        c.JSON(http.StatusCreated, response)</span>
+}
+
+// GET /blogs/:id/comments - Get comments
+func (ctrl *BlogController) GetComments(c *gin.Context) <span class="cov8" title="1">{
+        blogID := c.Param("id")
+        if blogID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Blog ID is required"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">comments, err := ctrl.blogUC.GetComments(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">var commentResponses []CommentResponse
+        for _, comment := range comments </span><span class="cov8" title="1">{
+                commentResponses = append(commentResponses, ctrl.commentToResponse(comment))
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"comments": commentResponses})</span>
+}
+
+// Helper methods
+func (ctrl *BlogController) blogToResponse(blog models.Blog) BlogResponse <span class="cov8" title="1">{
+        var commentResponses []CommentResponse
+        for _, comment := range blog.Comments </span><span class="cov0" title="0">{
+                commentResponses = append(commentResponses, ctrl.commentToResponse(comment))
+        }</span>
+
+        <span class="cov8" title="1">return BlogResponse{
+                ID:          blog.ID,
+                Title:       blog.Title,
+                Content:     blog.Content,
+                AuthorID:    blog.AuthorID,
+                AuthorName:  blog.AuthorName,
+                Tags:        blog.Tags,
+                ViewCount:   blog.ViewCount,
+                Likes:       blog.Likes,
+                Dislikes:    blog.Dislikes,
+                Comments:    commentResponses,
+                IsPublished: blog.IsPublished,
+                CreatedAt:   blog.CreatedAt.Format(time.RFC3339),
+                UpdatedAt:   blog.UpdatedAt.Format(time.RFC3339),
+        }</span>
+}
+
+func (ctrl *BlogController) commentToResponse(comment models.Comment) CommentResponse <span class="cov8" title="1">{
+        return CommentResponse{
+                ID:         comment.ID,
+                BlogID:     comment.BlogID,
+                AuthorID:   comment.AuthorID,
+                AuthorName: comment.AuthorName,
+                Content:    comment.Content,
+                CreatedAt:  comment.CreatedAt.Format(time.RFC3339),
+                UpdatedAt:  comment.UpdatedAt.Format(time.RFC3339),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package controllers
+
+import (
+        "blog-api/Domain/models"
+        "blog-api/usecases"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+)
+
+var userUsecase usecases.UserUsecaseInterface
+
+// This function initializes the controller with a usecase implementation
+func InitUserController(u usecases.UserUsecaseInterface) <span class="cov0" title="0">{
+        userUsecase = u
+}</span>
+
+// Handler to update user profile
+func UpdateUserProfile(c *gin.Context) <span class="cov0" title="0">{
+        userIDRaw, exists := c.Get("userID")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">userID, ok := userIDRaw.(string)
+        if !ok </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID format"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">var input models.User
+        if err := c.ShouldBindJSON(&amp;input); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">updated, err := userUsecase.UpdateProfile(c.Request.Context(), userID, input)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Update failed"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, gin.H{"message": "Profile updated", "data": updated})</span>
+}
+
+// Handler to fetch user profile
+func GetUserProfile(c *gin.Context) <span class="cov0" title="0">{
+        userIDRaw, exists := c.Get("userID")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">userID, ok := userIDRaw.(string)
+        if !ok </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID format"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">user, err := userUsecase.GetProfile(c.Request.Context(), userID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, gin.H{"message": "Profile fetched", "data": user})</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package controllers
+
+import (
+        "blog-api/Domain/models"
+        "blog-api/usecases"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+)
+
+type UserController struct {
+        userUC usecases.UserUsecaseInterface
+}
+
+func NewUserController(userUC usecases.UserUsecaseInterface) *UserController <span class="cov0" title="0">{
+        return &amp;UserController{userUC: userUC}
+}</span>
+
+// POST /register
+func (ctrl *UserController) Register(c *gin.Context) <span class="cov0" title="0">{
+        var req RegisterRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov0" title="0">user := models.User{
+                Username: req.Username,
+                Email:    req.Email,
+                Password: req.Password,
+        }
+
+        if err := ctrl.userUC.Register(user); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})</span>
+}
+
+// POST /login
+func (ctrl *UserController) Login(c *gin.Context) <span class="cov0" title="0">{
+        var userreq LoginRequest
+        if err := c.ShouldBindJSON(&amp;userreq); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">user := models.User{
+                Email:    userreq.Email,
+                Password: userreq.Password,
+        }
+        tokens, err := ctrl.userUC.Login(user)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, tokens)</span>
+}
+
+// POST /refresh
+func (ctrl *UserController) RefreshToken(c *gin.Context) <span class="cov0" title="0">{
+        var body struct {
+                RefreshToken string `json:"refresh_token"`
+        }
+        if err := c.ShouldBindJSON(&amp;body); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">newToken, err := ctrl.userUC.RefreshToken(body.RefreshToken)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, gin.H{"access_token": newToken})</span>
+}
+
+// PUT /promote/:email
+func (ctrl *UserController) Promote(c *gin.Context) <span class="cov0" title="0">{
+        email := c.Param("email")
+        if err := ctrl.userUC.Promote(email); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, gin.H{"message": "User promoted successfully"})</span>
+}
+
+// PUT /demote/:email
+func (ctrl *UserController) Demote(c *gin.Context) <span class="cov0" title="0">{
+        email := c.Param("email")
+        if err := ctrl.userUC.Demote(email); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, gin.H{"message": "User demoted successfully"})</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package main
+
+import (
+        "blog-api/Delivery/routers"
+        "blog-api/Infrastructure/database"
+        "blog-api/Infrastructure/repositories"
+        "blog-api/Infrastructure/services"
+        "blog-api/Infrastructure/utils"
+        "blog-api/usecases"
+        "log"
+        "net/http"
+        "os"
+        "strconv"
+        "time"
+
+        "github.com/gin-gonic/gin"
+)
+
+func main() <span class="cov0" title="0">{
+        // Load environment variables from .env file
+        utils.LoadEnv()
+
+        // Set Gin mode based on environment
+        if os.Getenv("ENV") == "production" </span><span class="cov0" title="0">{
+                gin.SetMode(gin.ReleaseMode)
+        }</span>
+
+        // Connect to MongoDB
+        <span class="cov0" title="0">if err := database.Connect(); err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to connect to MongoDB:", err)
+        }</span>
+        <span class="cov0" title="0">defer database.Disconnect()
+
+        // Initialize repositories
+        userCollection := database.GetCollection("users")
+        blogCollection := database.GetCollection("blogs")
+        tokenCollection := database.GetCollection("tokens")
+
+        userRepo := repositories.NewUserMongoRepo(userCollection)
+        blogRepo := repositories.NewBlogMongoRepo(blogCollection)
+        tokenRepo := repositories.NewTokenMongoRepo(tokenCollection)
+
+        // Initialize services
+        jwtSecret := os.Getenv("JWT_SECRET")
+        if jwtSecret == "" </span><span class="cov0" title="0">{
+                jwtSecret = "default-secret-key-change-in-production"
+        }</span>
+
+        <span class="cov0" title="0">jwtService := services.NewJWTService(jwtSecret, jwtSecret, 15*time.Minute, 7*24*time.Hour)
+        passwordService := &amp;services.BcryptHasher{}
+
+        // Initialize use cases
+        userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo)
+        blogUC := usecases.NewBlogUseCase(blogRepo)
+
+        // Create Gin router with proper configuration
+        r := gin.New() // Use gin.New() instead of gin.Default() to avoid middleware duplication
+
+        // Add middleware manually
+        r.Use(gin.Logger())
+        r.Use(gin.Recovery())
+
+        // Configure proxy trust for security
+        r.SetTrustedProxies([]string{"127.0.0.1", "::1"}) // Trust only localhost
+
+        // Add CORS middleware
+        r.Use(func(c *gin.Context) </span><span class="cov0" title="0">{
+                c.Header("Access-Control-Allow-Origin", "*")
+                c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+                c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+                if c.Request.Method == "OPTIONS" </span><span class="cov0" title="0">{
+                        c.AbortWithStatus(204)
+                        return
+                }</span>
+
+                <span class="cov0" title="0">c.Next()</span>
+        })
+
+        // Health check endpoint
+        <span class="cov0" title="0">r.GET("/health", func(c *gin.Context) </span><span class="cov0" title="0">{
+                c.JSON(http.StatusOK, gin.H{
+                        "status":  "ok",
+                        "message": "Blog API is running",
+                })
+        }</span>)
+
+        // Root endpoint
+        <span class="cov0" title="0">r.GET("/", func(c *gin.Context) </span><span class="cov0" title="0">{
+                c.JSON(http.StatusOK, gin.H{
+                        "message": "Welcome to Blog API with AI",
+                        "version": "1.0.0",
+                })
+        }</span>)
+
+        // Setup routes
+        <span class="cov0" title="0">routers.SetupRouter(r, userUC, blogUC, jwtService)
+
+        // Get port from environment or use default
+        port := os.Getenv("PORT")
+        if port == "" </span><span class="cov0" title="0">{
+                port = "8080"
+        }</span>
+
+        // Validate port
+        <span class="cov0" title="0">if _, err := strconv.Atoi(port); err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Invalid PORT environment variable")
+        }</span>
+
+        <span class="cov0" title="0">log.Printf("Server starting on port %s", port)
+        if err := r.Run(":" + port); err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to start server:", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package middlewares
+
+import (
+        "blog-api/Domain/interfaces"
+        "net/http"
+        "strings"
+
+        "github.com/gin-gonic/gin"
+)
+
+func AuthMiddleware(tokenService interfaces.TokenService, allowedRoles ...string) gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                authHeader := c.GetHeader("Authorization")
+                if authHeader == "" </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov0" title="0">parts := strings.Split(authHeader, " ")
+                if len(parts) != 2 || parts[0] != "Bearer" </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov0" title="0">tokenStr := parts[1]
+                claims, err := tokenService.VerifyAccessToken(tokenStr)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+                        c.Abort()
+                        return
+                }</span>
+
+                // Role-based access check
+                <span class="cov0" title="0">if len(allowedRoles) &gt; 0 </span><span class="cov0" title="0">{
+                        allowed := false
+                        for _, r := range allowedRoles </span><span class="cov0" title="0">{
+                                if claims.Role == r </span><span class="cov0" title="0">{
+                                        allowed = true
+                                        break</span>
+                                }
+                        }
+                        <span class="cov0" title="0">if !allowed </span><span class="cov0" title="0">{
+                                c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+                                c.Abort()
+                                return
+                        }</span>
+                }
+
+                // Store claims for downstream handlers
+                <span class="cov0" title="0">c.Set("userID", claims.UserID)
+                c.Set("email", claims.Email)
+                c.Set("role", claims.Role)
+
+                c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package routers
+
+import (
+        "blog-api/Delivery/controllers"
+        "blog-api/Delivery/middlewares"
+        "blog-api/Domain/interfaces"
+        "blog-api/usecases"
+
+        "github.com/gin-gonic/gin"
+)
+
+func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, tokenService interfaces.TokenService) <span class="cov0" title="0">{
+        // Controllers
+        userController := controllers.NewUserController(userUC)
+        blogController := controllers.NewBlogController(blogUC)
+
+        // Initialize profile controller
+        controllers.InitUserController(userUC)
+
+        // Public routes
+        r.POST("/register", userController.Register)
+        r.POST("/login", userController.Login)
+        r.POST("/refresh", userController.RefreshToken)
+
+        // Blog routes (public)
+        r.GET("/blogs", blogController.GetPaginatedBlogs)
+        r.GET("/blogs/search", blogController.SearchBlogs)
+        r.GET("/blogs/filter", blogController.FilterBlogs)
+        r.GET("/blogs/:id", blogController.GetBlogByID)
+        r.GET("/blogs/:id/comments", blogController.GetComments)
+
+        // Protected routes
+        auth := r.Group("/api")
+        </span><span class="cov0" title="0">{
+                // Blog routes (authenticated)
+                blogs := auth.Group("/blogs").Use(middlewares.AuthMiddleware(tokenService))
+                </span><span class="cov0" title="0">{
+                        blogs.POST("/", blogController.CreateBlog)
+                        blogs.PUT("/:id", blogController.UpdateBlog)
+                        blogs.DELETE("/:id", blogController.DeleteBlog)
+                        blogs.POST("/:id/comments", blogController.AddComment)
+                        blogs.POST("/:id/view", blogController.IncrementViewCount)
+                        blogs.POST("/:id/like", blogController.LikeBlog)
+                        blogs.DELETE("/:id/like", blogController.UnlikeBlog)
+                        blogs.POST("/:id/dislike", blogController.DislikeBlog)
+                        blogs.DELETE("/:id/dislike", blogController.RemoveDislike)
+                }</span>
+
+                // Profile routes (authenticated)
+                <span class="cov0" title="0">profile := auth.Group("/profile").Use(middlewares.AuthMiddleware(tokenService))
+                </span><span class="cov0" title="0">{
+                        profile.GET("/", controllers.GetUserProfile)
+                        profile.PUT("/", controllers.UpdateUserProfile)
+                }</span>
+
+                // Admin-only routes
+                <span class="cov0" title="0">admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin"))
+                </span><span class="cov0" title="0">{
+                        admin.POST("/promote/:email", userController.Promote)
+                }</span>
+
+                // Superadmin-only routes
+                <span class="cov0" title="0">super := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
+                </span><span class="cov0" title="0">{
+                        super.POST("/demote/:email", userController.Demote)
+                }</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package database
+
+import (
+        "context"
+        "log"
+        "os"
+        "time"
+
+        "go.mongodb.org/mongo-driver/mongo"
+        "go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+        Client *mongo.Client
+        DB     *mongo.Database
+)
+
+// Connect establishes connection to MongoDB Atlas
+func Connect() error <span class="cov0" title="0">{
+        mongoURI := os.Getenv("MONGODB_URI")
+        if mongoURI == "" </span><span class="cov0" title="0">{
+                log.Fatal("MONGODB_URI environment variable is not set")
+        }</span>
+
+        <span class="cov0" title="0">ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer cancel()
+
+        clientOptions := options.Client().ApplyURI(mongoURI)
+        clientOptions.SetServerSelectionTimeout(30 * time.Second)
+        clientOptions.SetSocketTimeout(30 * time.Second)
+
+        var err error
+        Client, err = mongo.Connect(ctx, clientOptions)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // Test the connection
+        <span class="cov0" title="0">err = Client.Ping(ctx, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Failed to ping MongoDB: %v", err)
+                log.Println("Please check:")
+                log.Println("1. Your IP address is whitelisted in MongoDB Atlas")
+                log.Println("2. Database user has correct permissions")
+                log.Println("3. Connection string format is correct")
+                return err
+        }</span>
+
+        // Set the database
+        <span class="cov0" title="0">DB = Client.Database("blog_db")
+        log.Println("Successfully connected to MongoDB Atlas!")
+        return nil</span>
+}
+
+// Disconnect closes the MongoDB connection
+func Disconnect() error <span class="cov0" title="0">{
+        if Client != nil </span><span class="cov0" title="0">{
+                ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+                defer cancel()
+                return Client.Disconnect(ctx)
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+// GetCollection returns a MongoDB collection
+func GetCollection(collectionName string) *mongo.Collection <span class="cov0" title="0">{
+        return DB.Collection(collectionName)
+}</span>
+
+// GetClient returns the MongoDB client
+func GetClient() *mongo.Client <span class="cov0" title="0">{
+        return Client
+}</span>
+
+// GetDatabase returns the MongoDB database
+func GetDatabase() *mongo.Database <span class="cov0" title="0">{
+        return DB
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package db_models
+
+import (
+        "blog-api/Domain/models"
+        "time"
+)
+
+type Token struct {
+        ID        string    `bson:"_id"`
+        UserID    string    `bson:"user_id"`
+        TokenHash string    `bson:"token_hash"`
+        CreatedAt time.Time `bson:"created_at"`
+        ExpiresAt time.Time `bson:"expires_at"`
+        IP        string    `bson:"ip"`
+        Device    string    `bson:"device"`
+}
+
+func FromDomainToken(token *models.Token) *Token <span class="cov8" title="1">{
+        return &amp;Token{
+                ID:        token.ID,
+                UserID:    token.UserID,
+                TokenHash: token.Token,
+                CreatedAt: token.CreatedAt,
+                ExpiresAt: token.ExpiresAt,
+                IP:        token.IP,
+                Device:    token.Device,
+        }
+}</span>
+
+func ToDomainToken(token *Token) *models.Token <span class="cov8" title="1">{
+        return &amp;models.Token{
+                ID:        token.ID,
+                UserID:    token.UserID,
+                Token:     token.TokenHash,
+                CreatedAt: token.CreatedAt,
+                ExpiresAt: token.ExpiresAt,
+                IP:        token.IP,
+                Device:    token.Device,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// infrastructure/mongo/user_model.go
+package db_models
+
+import (
+        "blog-api/Domain/models"
+
+        "go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+// UserModel represents the MongoDB-specific user model
+// This handles the conversion between domain and infrastructure concerns
+type UserModel struct {
+        ID           primitive.ObjectID `bson:"_id,omitempty"`
+        Username     string             `bson:"username"`
+        Email        string             `bson:"email"`
+        PasswordHash string             `bson:"password_hash"`
+        Role         string             `bson:"role"`
+        Verified     bool               `bson:"verified"`
+}
+
+// FromDomainUser converts a domain User to a MongoDB UserModel
+func FromDomainUser(u *models.User) *UserModel <span class="cov8" title="1">{
+        var objectID primitive.ObjectID
+        if u.ID != "" </span><span class="cov8" title="1">{
+                if id, err := primitive.ObjectIDFromHex(u.ID); err == nil </span><span class="cov8" title="1">{
+                        objectID = id
+                }</span>
+        }
+
+        <span class="cov8" title="1">return &amp;UserModel{
+                ID:           objectID,
+                Username:     u.Username,
+                Email:        u.Email,
+                PasswordHash: u.Password,
+                Role:         u.Role,
+                Verified:     u.Verified,
+        }</span>
+}
+
+// ToDomainUser converts a MongoDB UserModel to a domain User
+func ToDomainUser(m *UserModel) *models.User <span class="cov8" title="1">{
+        return &amp;models.User{
+                ID:       m.ID.Hex(),
+                Username: m.Username,
+                Email:    m.Email,
+                Password: m.PasswordHash,
+                Role:     m.Role,
+                Verified: m.Verified,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package repositories
+
+import (
+        "blog-api/Domain/models"
+        "context"
+        "time"
+
+        "go.mongodb.org/mongo-driver/bson"
+        "go.mongodb.org/mongo-driver/bson/primitive"
+        "go.mongodb.org/mongo-driver/mongo"
+        "go.mongodb.org/mongo-driver/mongo/options"
+)
+
+type blogMongoRepo struct {
+        collection *mongo.Collection
+}
+
+func NewBlogMongoRepo(col *mongo.Collection) *blogMongoRepo <span class="cov8" title="1">{
+        return &amp;blogMongoRepo{collection: col}
+}</span>
+
+// CreateBlog creates a new blog post
+func (br *blogMongoRepo) CreateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        // Generate a new ObjectID for MongoDB
+        objectID := primitive.NewObjectID()
+        blog.ID = objectID.Hex()
+        blog.CreatedAt = time.Now()
+        blog.UpdatedAt = time.Now()
+
+        // Convert to MongoDB model for insertion
+        blogModel := bson.M{
+                "_id":          objectID,
+                "title":        blog.Title,
+                "content":      blog.Content,
+                "author_id":    blog.AuthorID,
+                "author_name":  blog.AuthorName,
+                "tags":         blog.Tags,
+                "view_count":   blog.ViewCount,
+                "likes":        blog.Likes,
+                "dislikes":     blog.Dislikes,
+                "comments":     blog.Comments,
+                "is_published": blog.IsPublished,
+                "created_at":   blog.CreatedAt,
+                "updated_at":   blog.UpdatedAt,
+        }
+
+        _, err := br.collection.InsertOne(context.TODO(), blogModel)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.Blog{}, err
+        }</span>
+
+        <span class="cov8" title="1">return blog, nil</span>
+}
+
+// GetPaginatedBlogs retrieves blogs with pagination
+func (br *blogMongoRepo) GetPaginatedBlogs(page, limit int) ([]models.Blog, error) <span class="cov8" title="1">{
+        skip := (page - 1) * limit
+
+        opts := options.Find().
+                SetLimit(int64(limit)).
+                SetSkip(int64(skip)).
+                SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+        cursor, err := br.collection.Find(context.TODO(), bson.M{"is_published": true}, opts)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">defer cursor.Close(context.TODO())
+
+        var blogs []models.Blog
+        if err = cursor.All(context.TODO(), &amp;blogs); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return blogs, nil</span>
+}
+
+// GetBlogByID retrieves a blog by its ID
+func (br *blogMongoRepo) GetBlogByID(blogID string) (models.Blog, error) <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov8" title="1">{
+                return models.Blog{}, err
+        }</span>
+
+        <span class="cov8" title="1">var blog models.Blog
+        err = br.collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&amp;blog)
+        if err != nil </span><span class="cov8" title="1">{
+                return models.Blog{}, err
+        }</span>
+
+        <span class="cov8" title="1">return blog, nil</span>
+}
+
+// UpdateBlog updates an existing blog post
+func (br *blogMongoRepo) UpdateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        blog.UpdatedAt = time.Now()
+
+        objectID, err := primitive.ObjectIDFromHex(blog.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.Blog{}, err
+        }</span>
+
+        <span class="cov8" title="1">filter := bson.M{"_id": objectID}
+        update := bson.M{"$set": bson.M{
+                "title":        blog.Title,
+                "content":      blog.Content,
+                "author_id":    blog.AuthorID,
+                "author_name":  blog.AuthorName,
+                "tags":         blog.Tags,
+                "view_count":   blog.ViewCount,
+                "likes":        blog.Likes,
+                "dislikes":     blog.Dislikes,
+                "comments":     blog.Comments,
+                "is_published": blog.IsPublished,
+                "updated_at":   blog.UpdatedAt,
+        }}
+
+        _, err = br.collection.UpdateOne(context.TODO(), filter, update)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.Blog{}, err
+        }</span>
+
+        <span class="cov8" title="1">return blog, nil</span>
+}
+
+// DeleteBlog deletes a blog post
+func (br *blogMongoRepo) DeleteBlog(blogID string) error <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">_, err = br.collection.DeleteOne(context.TODO(), bson.M{"_id": objectID})
+        return err</span>
+}
+
+// SearchBlogs searches for blogs by title or content
+func (br *blogMongoRepo) SearchBlogs(query string) ([]models.Blog, error) <span class="cov8" title="1">{
+        filter := bson.M{
+                "$and": []bson.M{
+                        {"is_published": true},
+                        {"$or": []bson.M{
+                                {"title": bson.M{"$regex": query, "$options": "i"}},
+                                {"content": bson.M{"$regex": query, "$options": "i"}},
+                        }},
+                },
+        }
+
+        opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+        cursor, err := br.collection.Find(context.TODO(), filter, opts)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">defer cursor.Close(context.TODO())
+
+        var blogs []models.Blog
+        if err = cursor.All(context.TODO(), &amp;blogs); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return blogs, nil</span>
+}
+
+// FilterBlogs filters blogs by tags, date range, and sort order
+func (br *blogMongoRepo) FilterBlogs(tags []string, dateRange [2]string, sortBy string) ([]models.Blog, error) <span class="cov8" title="1">{
+        filter := bson.M{"is_published": true}
+
+        // Add tags filter if provided
+        if len(tags) &gt; 0 </span><span class="cov8" title="1">{
+                filter["tags"] = bson.M{"$in": tags}
+        }</span>
+
+        // Add date range filter if provided
+        <span class="cov8" title="1">if dateRange[0] != "" &amp;&amp; dateRange[1] != "" </span><span class="cov0" title="0">{
+                startDate, err := time.Parse("2006-01-02", dateRange[0])
+                if err == nil </span><span class="cov0" title="0">{
+                        endDate, err := time.Parse("2006-01-02", dateRange[1])
+                        if err == nil </span><span class="cov0" title="0">{
+                                endDate = endDate.Add(24 * time.Hour) // Include the entire end date
+                                filter["created_at"] = bson.M{
+                                        "$gte": startDate,
+                                        "$lt":  endDate,
+                                }
+                        }</span>
+                }
+        }
+
+        // Set sort order
+        <span class="cov8" title="1">var sortField string
+        var sortOrder int
+        switch sortBy </span>{
+        case "title":<span class="cov0" title="0">
+                sortField = "title"
+                sortOrder = 1</span>
+        case "created_at":<span class="cov8" title="1">
+                sortField = "created_at"
+                sortOrder = -1</span>
+        case "updated_at":<span class="cov0" title="0">
+                sortField = "updated_at"
+                sortOrder = -1</span>
+        case "view_count":<span class="cov0" title="0">
+                sortField = "view_count"
+                sortOrder = -1</span>
+        case "likes":<span class="cov0" title="0">
+                sortField = "likes"
+                sortOrder = -1</span>
+        default:<span class="cov0" title="0">
+                sortField = "created_at"
+                sortOrder = -1</span>
+        }
+
+        <span class="cov8" title="1">opts := options.Find().SetSort(bson.D{{Key: sortField, Value: sortOrder}})
+        cursor, err := br.collection.Find(context.TODO(), filter, opts)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">defer cursor.Close(context.TODO())
+
+        var blogs []models.Blog
+        if err = cursor.All(context.TODO(), &amp;blogs); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return blogs, nil</span>
+}
+
+// IncrementViewCount increments the view count of a blog
+func (br *blogMongoRepo) IncrementViewCount(blogID string) error <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">filter := bson.M{"_id": objectID}
+        update := bson.M{"$inc": bson.M{"view_count": 1}}
+
+        _, err = br.collection.UpdateOne(context.TODO(), filter, update)
+        return err</span>
+}
+
+// UpdateLikes updates the likes count of a blog
+func (br *blogMongoRepo) UpdateLikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">filter := bson.M{"_id": objectID}
+        var update bson.M
+        if increment </span><span class="cov8" title="1">{
+                update = bson.M{"$inc": bson.M{"likes": 1}}
+        }</span> else<span class="cov8" title="1"> {
+                update = bson.M{"$inc": bson.M{"likes": -1}}
+        }</span>
+
+        <span class="cov8" title="1">_, err = br.collection.UpdateOne(context.TODO(), filter, update)
+        return err</span>
+}
+
+// UpdateDislikes updates the dislikes count of a blog
+func (br *blogMongoRepo) UpdateDislikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">filter := bson.M{"_id": objectID}
+        var update bson.M
+        if increment </span><span class="cov8" title="1">{
+                update = bson.M{"$inc": bson.M{"dislikes": 1}}
+        }</span> else<span class="cov8" title="1"> {
+                update = bson.M{"$inc": bson.M{"dislikes": -1}}
+        }</span>
+
+        <span class="cov8" title="1">_, err = br.collection.UpdateOne(context.TODO(), filter, update)
+        return err</span>
+}
+
+// AddComment adds a comment to a blog post
+func (br *blogMongoRepo) AddComment(blogID string, comment models.Comment) (models.Comment, error) <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.Comment{}, err
+        }</span>
+
+        // Generate a new ObjectID for the comment
+        <span class="cov8" title="1">commentObjectID := primitive.NewObjectID()
+        comment.ID = commentObjectID.Hex()
+        comment.BlogID = blogID
+        comment.CreatedAt = time.Now()
+        comment.UpdatedAt = time.Now()
+
+        filter := bson.M{"_id": objectID}
+        update := bson.M{"$push": bson.M{"comments": comment}}
+
+        _, err = br.collection.UpdateOne(context.TODO(), filter, update)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.Comment{}, err
+        }</span>
+
+        <span class="cov8" title="1">return comment, nil</span>
+}
+
+// GetComments retrieves all comments for a blog post
+func (br *blogMongoRepo) GetComments(blogID string) ([]models.Comment, error) <span class="cov8" title="1">{
+        objectID, err := primitive.ObjectIDFromHex(blogID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var blog models.Blog
+        err = br.collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&amp;blog)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return blog.Comments, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package repositories
+
+import (
+        "blog-api/Domain/interfaces"
+        "blog-api/Domain/models"
+        Database "blog-api/Infrastructure/database"
+        "context"
+        "errors"
+
+        "go.mongodb.org/mongo-driver/bson"
+        "go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type userRepository struct{}
+
+func NewUserRepository() interfaces.UserRepository <span class="cov0" title="0">{
+        return &amp;userRepository{}
+}</span>
+
+func (r *userRepository) UpdateUserProfile(ctx context.Context, id string, updated models.User) (models.User, error) <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+
+        // Convert string ID to primitive.ObjectID for MongoDB
+        objectID, err := primitive.ObjectIDFromHex(id)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, errors.New("invalid user ID")
+        }</span>
+
+        <span class="cov0" title="0">update := bson.M{
+                "$set": bson.M{
+                        "bio":     updated.Bio,
+                        "picture": updated.Picture,
+                        "contact": updated.Contact,
+                },
+        }
+
+        _, err = collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov0" title="0">return r.GetUserByID(ctx, id)</span>
+}
+
+func (r *userRepository) GetUserByID(ctx context.Context, id string) (models.User, error) <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+
+        // Convert string ID to primitive.ObjectID for MongoDB
+        objectID, err := primitive.ObjectIDFromHex(id)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, errors.New("invalid user ID")
+        }</span>
+
+        <span class="cov0" title="0">var user models.User
+        err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&amp;user)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        // Convert the ID back to string for domain model
+        <span class="cov0" title="0">user.ID = objectID.Hex()
+        return user, err</span>
+}
+
+func (r *userRepository) CountUsers() (int64, error) <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        return collection.CountDocuments(context.TODO(), bson.M{})
+}</span>
+
+// Implement remaining methods from interfaces.UserRepository
+func (r *userRepository) Insert(user *models.User) error <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        _, err := collection.InsertOne(context.TODO(), user)
+        return err
+}</span>
+
+func (r *userRepository) FindByEmail(email string) (*models.User, error) <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        filter := bson.M{"email": email}
+        var user models.User
+        err := collection.FindOne(context.TODO(), filter).Decode(&amp;user)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;user, err</span>
+}
+
+func (r *userRepository) UpdatePass(email string, passwordHash string) error <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        filter := bson.M{"email": email}
+        update := bson.M{"$set": bson.M{"password": passwordHash}}
+        _, err := collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+
+func (r *userRepository) UpdateRole(email string, role string) error <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        filter := bson.M{"email": email}
+        update := bson.M{"$set": bson.M{"role": role}}
+        _, err := collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+
+func (r *userRepository) Delete(email string) error <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        _, err := collection.DeleteOne(context.TODO(), bson.M{"email": email})
+        return err
+}</span>
+
+func (r *userRepository) Verify(email string) error <span class="cov0" title="0">{
+        collection := Database.GetCollection("users")
+        filter := bson.M{"email": email}
+        update := bson.M{"$set": bson.M{"verified": true}}
+        _, err := collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package repositories
+
+import (
+        "blog-api/Domain/models"
+        "blog-api/Infrastructure/db_models"
+        "context"
+
+        "go.mongodb.org/mongo-driver/bson"
+        "go.mongodb.org/mongo-driver/mongo"
+)
+
+type tokenMongoRepo struct {
+        collection *mongo.Collection
+}
+
+func NewTokenMongoRepo(col *mongo.Collection) *tokenMongoRepo <span class="cov8" title="1">{
+        return &amp;tokenMongoRepo{collection: col}
+}</span>
+
+func (tr *tokenMongoRepo) CreateToken(token *models.Token) error <span class="cov8" title="1">{
+        db_token := db_models.FromDomainToken(token)
+        _, err := tr.collection.InsertOne(context.TODO(), db_token)
+        return err
+}</span>
+
+func (tr *tokenMongoRepo) DeleteToken(tokenID string) error <span class="cov0" title="0">{
+        _, err := tr.collection.DeleteOne(context.TODO(), bson.M{"id": tokenID})
+        return err
+}</span>
+
+func (tr *tokenMongoRepo) Update(token *models.Token) error <span class="cov8" title="1">{
+        db_token := db_models.FromDomainToken(token)
+        filter := bson.M{"id": db_token.ID}
+        update := bson.M{"$set": db_token}
+        _, err := tr.collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+
+func (tr *tokenMongoRepo) GetToken(tokenID string) (*models.Token, error) <span class="cov8" title="1">{
+        var token db_models.Token
+        filter := bson.M{"id": tokenID}
+        err := tr.collection.FindOne(context.TODO(), filter).Decode(&amp;token)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">domainToken := db_models.ToDomainToken(&amp;token)
+        return domainToken, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package repositories
+
+import (
+        "blog-api/Domain/models"
+        "blog-api/Infrastructure/db_models"
+        "context"
+        "errors"
+
+        "go.mongodb.org/mongo-driver/bson"
+        "go.mongodb.org/mongo-driver/bson/primitive"
+        "go.mongodb.org/mongo-driver/mongo"
+)
+
+type userMongoRepo struct {
+        collection *mongo.Collection
+}
+
+func NewUserMongoRepo(col *mongo.Collection) *userMongoRepo <span class="cov8" title="1">{
+        return &amp;userMongoRepo{collection: col}
+}</span>
+
+func (ur *userMongoRepo) Insert(user *models.User) error <span class="cov8" title="1">{
+        db_user := db_models.FromDomainUser(user)
+        _, err := ur.collection.InsertOne(context.TODO(), db_user)
+        return err
+}</span>
+
+func (ur *userMongoRepo) FindByEmail(email string) (*models.User, error) <span class="cov8" title="1">{
+        filter := bson.M{"email": email}
+        var user db_models.UserModel
+        err := ur.collection.FindOne(context.TODO(), filter).Decode(&amp;user)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return db_models.ToDomainUser(&amp;user), err</span>
+}
+
+func (ur *userMongoRepo) UpdatePass(email string, passwordHash string) error <span class="cov8" title="1">{
+        filter := bson.M{"email": email}
+        update := bson.M{"$set": bson.M{"password_hash": passwordHash}}
+        _, err := ur.collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+
+func (ur *userMongoRepo) UpdateRole(email string, role string) error <span class="cov8" title="1">{
+        filter := bson.M{"email": email}
+        update := bson.M{"$set": bson.M{"role": role}}
+        _, err := ur.collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+
+func (ur *userMongoRepo) Delete(email string) error <span class="cov8" title="1">{
+        _, err := ur.collection.DeleteOne(context.TODO(), bson.M{"email": email})
+        return err
+}</span>
+
+func (ur *userMongoRepo) Verify(email string) error <span class="cov8" title="1">{
+        filter := bson.M{"email": email}
+        update := bson.M{"$set": bson.M{"verified": true}}
+        _, err := ur.collection.UpdateOne(context.TODO(), filter, update)
+        return err
+}</span>
+
+func (ur *userMongoRepo) CountUsers() (int64, error) <span class="cov8" title="1">{
+        count, err := ur.collection.CountDocuments(context.TODO(), bson.M{})
+        if err != nil </span><span class="cov0" title="0">{
+                return 0, err
+        }</span>
+        <span class="cov8" title="1">return count, nil</span>
+}
+
+// GetUserByID retrieves a user by their ID
+func (ur *userMongoRepo) GetUserByID(ctx context.Context, id string) (models.User, error) <span class="cov0" title="0">{
+        // Convert string ID to primitive.ObjectID for MongoDB
+        objectID, err := primitive.ObjectIDFromHex(id)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, errors.New("invalid user ID")
+        }</span>
+
+        <span class="cov0" title="0">var user db_models.UserModel
+        err = ur.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&amp;user)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov0" title="0">domainUser := db_models.ToDomainUser(&amp;user)
+        return *domainUser, err</span>
+}
+
+// UpdateUserProfile updates a user's profile information
+func (ur *userMongoRepo) UpdateUserProfile(ctx context.Context, id string, updated models.User) (models.User, error) <span class="cov0" title="0">{
+        // Convert string ID to primitive.ObjectID for MongoDB
+        objectID, err := primitive.ObjectIDFromHex(id)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, errors.New("invalid user ID")
+        }</span>
+
+        <span class="cov0" title="0">update := bson.M{
+                "$set": bson.M{
+                        "bio":     updated.Bio,
+                        "picture": updated.Picture,
+                        "contact": updated.Contact,
+                },
+        }
+
+        _, err = ur.collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov0" title="0">return ur.GetUserByID(ctx, id)</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package services
+
+import (
+        "blog-api/Domain/models"
+        "crypto/sha256"
+        "encoding/hex"
+        "errors"
+        "time"
+
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/google/uuid"
+)
+
+type JWTService struct {
+        accessSecretKey  string
+        refreshSecretKey string
+        accessTokenTTL   time.Duration
+        refreshTokenTTL  time.Duration
+}
+
+func NewJWTService(accessSecret, refreshSecret string, accessTTL, refreshTTL time.Duration) *JWTService <span class="cov8" title="1">{
+        return &amp;JWTService{
+                accessSecretKey:  accessSecret,
+                refreshSecretKey: refreshSecret,
+                accessTokenTTL:   accessTTL,
+                refreshTokenTTL:  refreshTTL,
+        }
+}</span>
+
+func (j *JWTService) GenerateAccessToken(userID, email, role string) (string, error) <span class="cov8" title="1">{
+        exp := time.Now().Add(j.accessTokenTTL).Unix()
+
+        claims := jwt.MapClaims{
+                "user_id": userID,
+                "email":   email,
+                "role":    role,
+                "exp":     exp,
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        signed, err := token.SignedString([]byte(j.accessSecretKey))
+
+        return signed, err
+}</span>
+
+func (j *JWTService) GenerateRefreshToken(userID, email, role string) (*models.Token, error) <span class="cov8" title="1">{
+        exp := time.Now().Add(j.refreshTokenTTL)
+        iat := time.Now()
+
+        tokenID := uuid.New().String()
+
+        claims := jwt.MapClaims{
+                "user_id":  userID,
+                "email":    email,
+                "role":     role,
+                "token_id": tokenID,
+                "exp":      exp.Unix(),
+                "iat":      iat.Unix(),
+        }
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        signed, err := token.SignedString([]byte(j.refreshSecretKey))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;models.Token{
+                ID:        tokenID,
+                Token:     signed,
+                ExpiresAt: exp,
+                CreatedAt: iat,
+                UserID:    userID,
+                // IP: '',
+                // Device: '',
+        }, nil</span>
+}
+func (j *JWTService) VerifyAccessToken(tokenStr string) (*models.UserAccessClaims, error) <span class="cov8" title="1">{
+        token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                return []byte(j.accessSecretKey), nil
+        }</span>)
+        <span class="cov8" title="1">if err != nil || !token.Valid </span><span class="cov8" title="1">{
+                return nil, errors.New("invalid token")
+        }</span>
+        <span class="cov8" title="1">claims := token.Claims.(jwt.MapClaims)
+        return &amp;models.UserAccessClaims{
+                UserID: claims["user_id"].(string),
+                Email:  claims["email"].(string),
+                Role:   claims["role"].(string),
+        }, nil</span>
+}
+
+func (j *JWTService) VerifyRefreshToken(tokenStr string) (*models.UserRefreshClaims, error) <span class="cov8" title="1">{
+        token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                return []byte(j.refreshSecretKey), nil
+        }</span>)
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if !token.Valid </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid refresh token")
+        }</span>
+        <span class="cov8" title="1">claims := token.Claims.(jwt.MapClaims)
+        expUnix := int64(claims["exp"].(float64))
+        iatUnix := int64(claims["iat"].(float64))
+        return &amp;models.UserRefreshClaims{
+                UserID:    claims["user_id"].(string),
+                Email:     claims["email"].(string),
+                Role:      claims["role"].(string),
+                TokenID:   claims["token_id"].(string),
+                ExpiresAt: time.Unix(expUnix, 0),
+                CreatedAt: time.Unix(iatUnix, 0),
+        }, nil</span>
+
+}
+
+func (j *JWTService) HashToken(token string) string <span class="cov0" title="0">{
+        hash := sha256.Sum256([]byte(token))
+        return hex.EncodeToString(hash[:])
+}</span>
+
+func (j *JWTService) VerifyToken(hashed, token string) bool <span class="cov0" title="0">{
+        return hashed == j.HashToken(token)
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package services
+
+import "golang.org/x/crypto/bcrypt"
+
+type BcryptHasher struct{}
+
+func (b BcryptHasher) HashPassword(password string) (string, error) <span class="cov8" title="1">{
+        bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+        return string(bytes), err
+}</span>
+
+func (b BcryptHasher) VerifyPassword(hashed, password string) bool <span class="cov8" title="1">{
+        err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
+        return err == nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package utils
+
+import (
+        "bufio"
+        "log"
+        "os"
+        "strings"
+)
+
+// LoadEnv loads environment variables from .env file
+func LoadEnv() <span class="cov0" title="0">{
+        // Check if .env file exists
+        if _, err := os.Stat(".env"); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                log.Println("No .env file found, using system environment variables")
+                return
+        }</span>
+
+        // Open .env file
+        <span class="cov0" title="0">file, err := os.Open(".env")
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Error opening .env file: %v", err)
+                return
+        }</span>
+        <span class="cov0" title="0">defer file.Close()
+
+        // Read file line by line
+        scanner := bufio.NewScanner(file)
+        for scanner.Scan() </span><span class="cov0" title="0">{
+                line := strings.TrimSpace(scanner.Text())
+
+                // Skip empty lines and comments
+                if line == "" || strings.HasPrefix(line, "#") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // Split on first '=' to separate key and value
+                <span class="cov0" title="0">parts := strings.SplitN(line, "=", 2)
+                if len(parts) != 2 </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">key := strings.TrimSpace(parts[0])
+                value := strings.TrimSpace(parts[1])
+
+                // Remove quotes if present
+                if len(value) &gt;= 2 &amp;&amp; (value[0] == '"' &amp;&amp; value[len(value)-1] == '"') </span><span class="cov0" title="0">{
+                        value = value[1 : len(value)-1]
+                }</span>
+
+                // Set environment variable if not already set
+                <span class="cov0" title="0">if os.Getenv(key) == "" </span><span class="cov0" title="0">{
+                        os.Setenv(key, value)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if err := scanner.Err(); err != nil </span><span class="cov0" title="0">{
+                log.Printf("Error reading .env file: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">log.Println("Environment variables loaded from .env file")</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package utils
+
+import (
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+)
+
+// Standardized success response
+func SendSuccess(c *gin.Context, message string, data interface{}) <span class="cov0" title="0">{
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "message": message,
+                "data":    data,
+        })
+}</span>
+
+// Standardized error response
+func SendError(c *gin.Context, code int, message string) <span class="cov0" title="0">{
+        c.JSON(code, gin.H{
+                "success": false,
+                "message": message,
+        })
+}</span>
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package mocks
+
+import (
+        "blog-api/Domain/models"
+
+        "github.com/stretchr/testify/mock"
+)
+
+type BlogRepositoryMock struct {
+        mock.Mock
+}
+
+func (m *BlogRepositoryMock) CreateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(blog)
+        return args.Get(0).(models.Blog), args.Error(1)
+}</span>
+
+func (m *BlogRepositoryMock) GetPaginatedBlogs(page, limit int) ([]models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(page, limit)
+        if args.Get(0) == nil </span><span class="cov8" title="1">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Blog), args.Error(1)</span>
+}
+
+func (m *BlogRepositoryMock) GetBlogByID(blogID string) (models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        return args.Get(0).(models.Blog), args.Error(1)
+}</span>
+
+func (m *BlogRepositoryMock) UpdateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(blog)
+        return args.Get(0).(models.Blog), args.Error(1)
+}</span>
+
+func (m *BlogRepositoryMock) DeleteBlog(blogID string) error <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        return args.Error(0)
+}</span>
+
+func (m *BlogRepositoryMock) SearchBlogs(query string) ([]models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(query)
+        if args.Get(0) == nil </span><span class="cov8" title="1">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Blog), args.Error(1)</span>
+}
+
+func (m *BlogRepositoryMock) FilterBlogs(tags []string, dateRange [2]string, sortBy string) ([]models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(tags, dateRange, sortBy)
+        if args.Get(0) == nil </span><span class="cov8" title="1">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Blog), args.Error(1)</span>
+}
+
+func (m *BlogRepositoryMock) IncrementViewCount(blogID string) error <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        return args.Error(0)
+}</span>
+
+func (m *BlogRepositoryMock) UpdateLikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        args := m.Called(blogID, increment)
+        return args.Error(0)
+}</span>
+
+func (m *BlogRepositoryMock) UpdateDislikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        args := m.Called(blogID, increment)
+        return args.Error(0)
+}</span>
+
+func (m *BlogRepositoryMock) AddComment(blogID string, comment models.Comment) (models.Comment, error) <span class="cov8" title="1">{
+        args := m.Called(blogID, comment)
+        return args.Get(0).(models.Comment), args.Error(1)
+}</span>
+
+func (m *BlogRepositoryMock) GetComments(blogID string) ([]models.Comment, error) <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        if args.Get(0) == nil </span><span class="cov8" title="1">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Comment), args.Error(1)</span>
+}
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">package mocks
+
+import (
+        "blog-api/Domain/models"
+
+        "github.com/stretchr/testify/mock"
+)
+
+type BlogUseCaseMock struct {
+        mock.Mock
+}
+
+func (m *BlogUseCaseMock) CreateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(blog)
+        return args.Get(0).(models.Blog), args.Error(1)
+}</span>
+
+func (m *BlogUseCaseMock) GetPaginatedBlogs(page, limit int) ([]models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(page, limit)
+        if args.Get(0) == nil </span><span class="cov8" title="1">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Blog), args.Error(1)</span>
+}
+
+func (m *BlogUseCaseMock) GetBlogByID(blogID string) (models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        return args.Get(0).(models.Blog), args.Error(1)
+}</span>
+
+func (m *BlogUseCaseMock) UpdateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(blog)
+        return args.Get(0).(models.Blog), args.Error(1)
+}</span>
+
+func (m *BlogUseCaseMock) DeleteBlog(blogID string) error <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        return args.Error(0)
+}</span>
+
+func (m *BlogUseCaseMock) SearchBlogs(query string) ([]models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(query)
+        if args.Get(0) == nil </span><span class="cov0" title="0">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Blog), args.Error(1)</span>
+}
+
+func (m *BlogUseCaseMock) FilterBlogs(tags []string, dateRange [2]string, sortBy string) ([]models.Blog, error) <span class="cov8" title="1">{
+        args := m.Called(tags, dateRange, sortBy)
+        if args.Get(0) == nil </span><span class="cov0" title="0">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Blog), args.Error(1)</span>
+}
+
+func (m *BlogUseCaseMock) IncrementViewCount(blogID string) error <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        return args.Error(0)
+}</span>
+
+func (m *BlogUseCaseMock) UpdateLikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        args := m.Called(blogID, increment)
+        return args.Error(0)
+}</span>
+
+func (m *BlogUseCaseMock) UpdateDislikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        args := m.Called(blogID, increment)
+        return args.Error(0)
+}</span>
+
+func (m *BlogUseCaseMock) AddComment(blogID string, comment models.Comment) (models.Comment, error) <span class="cov8" title="1">{
+        args := m.Called(blogID, comment)
+        return args.Get(0).(models.Comment), args.Error(1)
+}</span>
+
+func (m *BlogUseCaseMock) GetComments(blogID string) ([]models.Comment, error) <span class="cov8" title="1">{
+        args := m.Called(blogID)
+        if args.Get(0) == nil </span><span class="cov0" title="0">{
+                return nil, args.Error(1)
+        }</span>
+        <span class="cov8" title="1">return args.Get(0).([]models.Comment), args.Error(1)</span>
+}
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package mocks
+
+import (
+        "blog-api/Domain/models"
+
+        "github.com/stretchr/testify/mock"
+)
+
+type MockTokenRepository struct {
+        mock.Mock
+}
+
+func (m *MockTokenRepository) CreateToken(token *models.Token) error <span class="cov0" title="0">{
+        args := m.Called(token)
+        return args.Error(0)
+}</span>
+
+func (m *MockTokenRepository) DeleteToken(tokenID string) error <span class="cov0" title="0">{
+        args := m.Called(tokenID)
+        return args.Error(0)
+}</span>
+
+func (m *MockTokenRepository) Update(token *models.Token) error <span class="cov0" title="0">{
+        args := m.Called(token)
+        return args.Error(0)
+}</span>
+
+func (m *MockTokenRepository) GetToken(tokenID string) (*models.Token, error) <span class="cov0" title="0">{
+        args := m.Called(tokenID)
+        return args.Get(0).(*models.Token), args.Error(1)
+}</span>
+</pre>
+		
+		<pre class="file" id="file20" style="display: none">package mocks
+
+import (
+        "blog-api/Domain/models"
+
+        "github.com/stretchr/testify/mock"
+)
+
+type MockTokenService struct {
+        mock.Mock
+}
+
+func (m *MockTokenService) GenerateAccessToken(userID, email, role string) (string, error) <span class="cov0" title="0">{
+        args := m.Called(userID, email, role)
+        return args.String(0), args.Error(1)
+}</span>
+
+func (m *MockTokenService) GenerateRefreshToken(userID, email, role string) (*models.Token, error) <span class="cov0" title="0">{
+        args := m.Called(userID, email, role)
+        return args.Get(0).(*models.Token), args.Error(1)
+}</span>
+
+func (m *MockTokenService) VerifyAccessToken(tokenStr string) (*models.UserAccessClaims, error) <span class="cov0" title="0">{
+        args := m.Called(tokenStr)
+        return args.Get(0).(*models.UserAccessClaims), args.Error(1)
+}</span>
+
+func (m *MockTokenService) VerifyRefreshToken(tokenStr string) (*models.UserRefreshClaims, error) <span class="cov0" title="0">{
+        args := m.Called(tokenStr)
+        return args.Get(0).(*models.UserRefreshClaims), args.Error(1)
+}</span>
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package mocks
+
+import "github.com/stretchr/testify/mock"
+
+type MockHasher struct {
+        mock.Mock
+}
+
+func (m *MockHasher) HashPassword(password string) (string, error) <span class="cov0" title="0">{
+        args := m.Called(password)
+        return args.String(0), nil
+}</span>
+
+func (m *MockHasher) VerifyPassword(hashed, password string) bool <span class="cov0" title="0">{
+        args := m.Called(hashed, password)
+        return args.Bool(0)
+}</span>
+</pre>
+		
+		<pre class="file" id="file22" style="display: none">package mocks
+
+import (
+        "blog-api/Domain/models"
+
+        "github.com/stretchr/testify/mock"
+)
+
+type UserRepository struct {
+        mock.Mock
+}
+
+func (m *UserRepository) Insert(user *models.User) error <span class="cov0" title="0">{
+        args := m.Called(user)
+        return args.Error(0)
+}</span>
+
+func (m *UserRepository) FindByEmail(email string) (*models.User, error) <span class="cov0" title="0">{
+        args := m.Called(email)
+        user, _ := args.Get(0).(models.User)
+        return &amp;user, args.Error(1)
+}</span>
+
+func (m *UserRepository) UpdatePass(email, passowrdHash string) error <span class="cov0" title="0">{
+        args := m.Called(email, passowrdHash)
+        return args.Error(0)
+}</span>
+
+func (m *UserRepository) UpdateRole(email, role string) error <span class="cov0" title="0">{
+        args := m.Called(email, role)
+        return args.Error(0)
+}</span>
+
+func (m *UserRepository) Delete(email string) error <span class="cov0" title="0">{
+        args := m.Called(email)
+        return args.Error(0)
+}</span>
+
+func (m *UserRepository) Verify(email string) error <span class="cov0" title="0">{
+        args := m.Called(email)
+        return args.Error(0)
+}</span>
+
+func (m *UserRepository) CountUsers() (int64, error) <span class="cov0" title="0">{
+        args := m.Called()
+        count, _ := args.Get(0).(int64)
+        return count, args.Error(1)
+}</span>
+</pre>
+		
+		<pre class="file" id="file23" style="display: none">package main
+
+import (
+        "context"
+        "log"
+        "os"
+        "time"
+
+        "go.mongodb.org/mongo-driver/mongo"
+        "go.mongodb.org/mongo-driver/mongo/options"
+)
+
+// TestConfig holds test configuration
+type TestConfig struct {
+        MongoURI       string
+        DatabaseName   string
+        CollectionName string
+        Timeout        time.Duration
+}
+
+// GetTestConfig returns test configuration with defaults
+func GetTestConfig() *TestConfig <span class="cov0" title="0">{
+        return &amp;TestConfig{
+                MongoURI:       getEnvOrDefault("TEST_MONGO_URI", "mongodb://localhost:27017"),
+                DatabaseName:   getEnvOrDefault("TEST_DB_NAME", "blog_test_db"),
+                CollectionName: getEnvOrDefault("TEST_COLLECTION_NAME", "blogs"),
+                Timeout:        10 * time.Second,
+        }
+}</span>
+
+// ConnectTestDB connects to test MongoDB instance
+func ConnectTestDB(config *TestConfig) (*mongo.Client, error) <span class="cov0" title="0">{
+        ctx, cancel := context.WithTimeout(context.Background(), config.Timeout)
+        defer cancel()
+
+        client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.MongoURI))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // Ping the database to verify connection
+        <span class="cov0" title="0">err = client.Ping(ctx, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">log.Printf("Connected to test MongoDB: %s", config.MongoURI)
+        return client, nil</span>
+}
+
+// DisconnectTestDB disconnects from test MongoDB instance
+func DisconnectTestDB(client *mongo.Client, config *TestConfig) error <span class="cov0" title="0">{
+        ctx, cancel := context.WithTimeout(context.Background(), config.Timeout)
+        defer cancel()
+
+        err := client.Disconnect(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">log.Printf("Disconnected from test MongoDB")
+        return nil</span>
+}
+
+// CleanupTestDB cleans up test database
+func CleanupTestDB(client *mongo.Client, config *TestConfig) error <span class="cov0" title="0">{
+        ctx, cancel := context.WithTimeout(context.Background(), config.Timeout)
+        defer cancel()
+
+        database := client.Database(config.DatabaseName)
+        err := database.Drop(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">log.Printf("Cleaned up test database: %s", config.DatabaseName)
+        return nil</span>
+}
+
+// GetTestCollection returns test collection
+func GetTestCollection(client *mongo.Client, config *TestConfig) *mongo.Collection <span class="cov0" title="0">{
+        return client.Database(config.DatabaseName).Collection(config.CollectionName)
+}</span>
+
+// getEnvOrDefault returns environment variable value or default
+func getEnvOrDefault(key, defaultValue string) string <span class="cov0" title="0">{
+        if value := os.Getenv(key); value != "" </span><span class="cov0" title="0">{
+                return value
+        }</span>
+        <span class="cov0" title="0">return defaultValue</span>
+}
+
+// IsMongoRunning checks if MongoDB is running on the configured URI
+func IsMongoRunning(config *TestConfig) bool <span class="cov0" title="0">{
+        client, err := ConnectTestDB(config)
+        if err != nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov0" title="0">defer DisconnectTestDB(client, config)
+        return true</span>
+}
+</pre>
+		
+		<pre class="file" id="file24" style="display: none">package main
+
+import (
+        "blog-api/Domain/models"
+        "fmt"
+        "time"
+)
+
+// TestHelper provides common test utilities
+type TestHelper struct{}
+
+// CreateTestBlog creates a sample blog for testing
+func (th *TestHelper) CreateTestBlog() models.Blog <span class="cov0" title="0">{
+        return models.Blog{
+                ID:          "test-blog-123",
+                Title:       "Test Blog Title",
+                Content:     "This is a test blog content for testing purposes.",
+                AuthorID:    "test-user-123",
+                AuthorName:  "test@example.com",
+                Tags:        []string{"test", "go", "blog"},
+                ViewCount:   0,
+                Likes:       0,
+                Dislikes:    0,
+                Comments:    []models.Comment{},
+                IsPublished: true,
+                CreatedAt:   time.Now(),
+                UpdatedAt:   time.Now(),
+        }
+}</span>
+
+// CreateTestBlogs creates multiple sample blogs for testing
+func (th *TestHelper) CreateTestBlogs(count int) []models.Blog <span class="cov0" title="0">{
+        blogs := make([]models.Blog, count)
+        for i := 0; i &lt; count; i++ </span><span class="cov0" title="0">{
+                blogs[i] = models.Blog{
+                        ID:          fmt.Sprintf("test-blog-%d", i+1),
+                        Title:       fmt.Sprintf("Test Blog %d", i+1),
+                        Content:     fmt.Sprintf("This is test blog content %d", i+1),
+                        AuthorID:    fmt.Sprintf("test-user-%d", i+1),
+                        AuthorName:  fmt.Sprintf("user%d@example.com", i+1),
+                        Tags:        []string{"test", "go"},
+                        ViewCount:   i * 10,
+                        Likes:       i * 5,
+                        Dislikes:    i,
+                        Comments:    []models.Comment{},
+                        IsPublished: true,
+                        CreatedAt:   time.Now().AddDate(0, 0, -i),
+                        UpdatedAt:   time.Now().AddDate(0, 0, -i),
+                }
+        }</span>
+        <span class="cov0" title="0">return blogs</span>
+}
+
+// CreateTestComment creates a sample comment for testing
+func (th *TestHelper) CreateTestComment() models.Comment <span class="cov0" title="0">{
+        return models.Comment{
+                ID:         "test-comment-123",
+                BlogID:     "test-blog-123",
+                AuthorID:   "test-user-456",
+                AuthorName: "commenter@example.com",
+                Content:    "This is a test comment for testing purposes.",
+                CreatedAt:  time.Now(),
+                UpdatedAt:  time.Now(),
+        }
+}</span>
+
+// CreateTestComments creates multiple sample comments for testing
+func (th *TestHelper) CreateTestComments(count int) []models.Comment <span class="cov0" title="0">{
+        comments := make([]models.Comment, count)
+        for i := 0; i &lt; count; i++ </span><span class="cov0" title="0">{
+                comments[i] = models.Comment{
+                        ID:         fmt.Sprintf("test-comment-%d", i+1),
+                        BlogID:     "test-blog-123",
+                        AuthorID:   fmt.Sprintf("test-user-%d", i+1),
+                        AuthorName: fmt.Sprintf("commenter%d@example.com", i+1),
+                        Content:    fmt.Sprintf("This is test comment %d", i+1),
+                        CreatedAt:  time.Now().AddDate(0, 0, -i),
+                        UpdatedAt:  time.Now().AddDate(0, 0, -i),
+                }
+        }</span>
+        <span class="cov0" title="0">return comments</span>
+}
+
+// CreateTestUser creates a sample user for testing
+func (th *TestHelper) CreateTestUser() models.User <span class="cov0" title="0">{
+        return models.User{
+                ID:       "test-user-123",
+                Username: "testuser",
+                Email:    "test@example.com",
+                Password: "hashedpassword",
+                Role:     "user",
+                Verified: true,
+                Bio:      "Test user bio",
+                Picture:  "test-picture.jpg",
+                Contact:  "test-contact",
+        }
+}</span>
+
+// GetTestHelper returns a new TestHelper instance
+func GetTestHelper() *TestHelper <span class="cov0" title="0">{
+        return &amp;TestHelper{}
+}</span>
+</pre>
+		
+		<pre class="file" id="file25" style="display: none">package usecases
+
+import (
+        "blog-api/Domain/interfaces"
+        "blog-api/Domain/models"
+)
+
+type BlogUseCase interface {
+        CreateBlog(blog models.Blog) (models.Blog, error)
+        GetPaginatedBlogs(page, limit int) ([]models.Blog, error)
+        GetBlogByID(blogID string) (models.Blog, error)
+        UpdateBlog(blog models.Blog) (models.Blog, error)
+        DeleteBlog(blogID string) error
+        SearchBlogs(query string) ([]models.Blog, error)
+        FilterBlogs(tags []string, dateRange [2]string, sortBy string) ([]models.Blog, error)
+
+        // popularity tracking methods
+        IncrementViewCount(blogID string) error
+        UpdateLikes(blogID string, increment bool) error
+        UpdateDislikes(blogID string, increment bool) error
+        AddComment(blogID string, comment models.Comment) (models.Comment, error)
+        GetComments(blogID string) ([]models.Comment, error)
+}
+
+type blogUseCase struct {
+        blogRepo interfaces.BlogRepository
+}
+
+func NewBlogUseCase(blogRepo interfaces.BlogRepository) BlogUseCase <span class="cov8" title="1">{
+        return &amp;blogUseCase{
+                blogRepo: blogRepo,
+        }
+}</span>
+
+func (b *blogUseCase) CreateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        return b.blogRepo.CreateBlog(blog)
+}</span>
+
+func (b *blogUseCase) GetPaginatedBlogs(page, limit int) ([]models.Blog, error) <span class="cov8" title="1">{
+        return b.blogRepo.GetPaginatedBlogs(page, limit)
+}</span>
+
+func (b *blogUseCase) GetBlogByID(blogID string) (models.Blog, error) <span class="cov8" title="1">{
+        return b.blogRepo.GetBlogByID(blogID)
+}</span>
+
+func (b *blogUseCase) UpdateBlog(blog models.Blog) (models.Blog, error) <span class="cov8" title="1">{
+        return b.blogRepo.UpdateBlog(blog)
+}</span>
+
+func (b *blogUseCase) DeleteBlog(blogID string) error <span class="cov8" title="1">{
+        return b.blogRepo.DeleteBlog(blogID)
+}</span>
+
+func (b *blogUseCase) SearchBlogs(query string) ([]models.Blog, error) <span class="cov8" title="1">{
+        return b.blogRepo.SearchBlogs(query)
+}</span>
+
+func (b *blogUseCase) FilterBlogs(tags []string, dateRange [2]string, sortBy string) ([]models.Blog, error) <span class="cov8" title="1">{
+        return b.blogRepo.FilterBlogs(tags, dateRange, sortBy)
+}</span>
+
+func (b *blogUseCase) IncrementViewCount(blogID string) error <span class="cov8" title="1">{
+        return b.blogRepo.IncrementViewCount(blogID)
+}</span>
+
+func (b *blogUseCase) UpdateLikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        return b.blogRepo.UpdateLikes(blogID, increment)
+}</span>
+
+func (b *blogUseCase) UpdateDislikes(blogID string, increment bool) error <span class="cov8" title="1">{
+        return b.blogRepo.UpdateDislikes(blogID, increment)
+}</span>
+
+func (b *blogUseCase) AddComment(blogID string, comment models.Comment) (models.Comment, error) <span class="cov8" title="1">{
+        return b.blogRepo.AddComment(blogID, comment)
+}</span>
+
+func (b *blogUseCase) GetComments(blogID string) ([]models.Comment, error) <span class="cov8" title="1">{
+        return b.blogRepo.GetComments(blogID)
+}</span>
+</pre>
+		
+		<pre class="file" id="file26" style="display: none">package usecases
+
+import (
+        "blog-api/Domain/models"
+        "context"
+)
+
+func (u *userUsecase) UpdateProfile(ctx context.Context, id string, user models.User) (models.User, error) <span class="cov0" title="0">{
+        return u.repo.UpdateUserProfile(ctx, id, user)
+}</span>
+
+func (u *userUsecase) GetProfile(ctx context.Context, id string) (models.User, error) <span class="cov0" title="0">{
+        return u.repo.GetUserByID(ctx, id)
+}</span>
+</pre>
+		
+		<pre class="file" id="file27" style="display: none">package usecases
+
+import (
+        "blog-api/Domain/interfaces"
+        "blog-api/Domain/models"
+        "context"
+        "errors"
+        "log"
+        "net/mail"
+        "time"
+)
+
+func isValidEmail(email string) bool <span class="cov0" title="0">{
+        _, err := mail.ParseAddress(email)
+        return err == nil
+}</span>
+
+type OutPutToken struct {
+        Access_token  string
+        Refresh_token string
+}
+
+type UserUsecaseInterface interface {
+        Register(user models.User) error
+        Login(user models.User) (OutPutToken, error)
+        Promote(email string) error
+        Demote(email string) error
+        RefreshToken(token string) (string, error)
+        UpdateProfile(ctx context.Context, id string, user models.User) (models.User, error)
+        GetProfile(ctx context.Context, id string) (models.User, error)
+}
+
+type userUsecase struct {
+        repo         interfaces.UserRepository
+        hasher       interfaces.Hasher
+        tokenService interfaces.TokenService
+        tokenRepo    interfaces.TokenRepository
+}
+
+func NewUserUsecase(repo interfaces.UserRepository, hasher interfaces.Hasher, tokenService interfaces.TokenService, tokenRepo interfaces.TokenRepository) *userUsecase <span class="cov0" title="0">{
+        return &amp;userUsecase{repo: repo, hasher: hasher, tokenService: tokenService, tokenRepo: tokenRepo}
+}</span>
+
+func (uc *userUsecase) RefreshToken(tokenStr string) (string, error) <span class="cov0" title="0">{
+        // 1️⃣ Verify JWT refresh token (signature, format)
+        token, err := uc.tokenService.VerifyRefreshToken(tokenStr)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // 2️⃣ Expiry check
+        <span class="cov0" title="0">if token.ExpiresAt.Before(time.Now()) </span><span class="cov0" title="0">{
+                if err := uc.tokenRepo.DeleteToken(token.TokenID); err != nil </span><span class="cov0" title="0">{
+                        // optional: log error, but don't return it
+                        log.Printf("failed to delete expired token: %v", err)
+                }</span>
+                <span class="cov0" title="0">return "", errors.New("the refresh token expired")</span>
+        }
+
+        // 3️⃣ Fetch token from DB
+        <span class="cov0" title="0">dbToken, err := uc.tokenRepo.GetToken(token.TokenID)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">if dbToken == nil </span><span class="cov0" title="0">{
+                return "", errors.New("refresh token not found")
+        }</span>
+
+        // 4️⃣ Verify stored hashed token matches the raw token string
+        <span class="cov0" title="0">if !uc.tokenService.VerifyToken(dbToken.Token, tokenStr) </span><span class="cov0" title="0">{
+                return "", errors.New("invalid refresh token")
+        }</span>
+
+        // 6️⃣ Generate new access token
+        <span class="cov0" title="0">accessToken, err := uc.tokenService.GenerateAccessToken(token.UserID, token.Email, token.Role)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">return accessToken, nil</span>
+
+}
+
+func (uc *userUsecase) Register(user models.User) error <span class="cov0" title="0">{
+        if len(user.Username) &lt; 3 || len(user.Username) &gt; 50 </span><span class="cov0" title="0">{
+                return errors.New("username must be between 3 and 50 characters")
+        }</span>
+        <span class="cov0" title="0">if !isValidEmail(user.Email) </span><span class="cov0" title="0">{
+                return errors.New("invalid email address")
+        }</span>
+
+        <span class="cov0" title="0">if len(user.Password) &lt; 8 </span><span class="cov0" title="0">{
+                return errors.New("minimum length of password")
+        }</span>
+
+        <span class="cov0" title="0">hashed_pw, err := uc.hasher.HashPassword(user.Password)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">user.Password = hashed_pw
+        num, err := uc.repo.CountUsers()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">if num == 0 </span><span class="cov0" title="0">{
+                user.Role = "superadmin"
+        }</span> else<span class="cov0" title="0"> {
+                user.Role = "user"
+        }</span>
+        <span class="cov0" title="0">user.Verified = true //for time
+        err = uc.repo.Insert(&amp;user)
+        return err</span>
+
+}
+
+func (uc *userUsecase) Login(user models.User) (OutPutToken, error) <span class="cov0" title="0">{
+        existing_user, err := uc.repo.FindByEmail(user.Email)
+        if err != nil </span><span class="cov0" title="0">{
+                return OutPutToken{}, err
+        }</span>
+
+        <span class="cov0" title="0">if !existing_user.Verified </span><span class="cov0" title="0">{
+                return OutPutToken{}, errors.New("user not verified")
+        }</span>
+
+        <span class="cov0" title="0">if !uc.hasher.VerifyPassword(existing_user.Password, user.Password) </span><span class="cov0" title="0">{
+                return OutPutToken{}, errors.New("incorrect password")
+        }</span>
+
+        <span class="cov0" title="0">access_token, err := uc.tokenService.GenerateAccessToken(existing_user.ID, existing_user.Email, existing_user.Role)
+        if err != nil </span><span class="cov0" title="0">{
+                return OutPutToken{}, err
+        }</span>
+        <span class="cov0" title="0">refresh_token, err := uc.tokenService.GenerateRefreshToken(existing_user.ID, existing_user.Email, existing_user.Role)
+        if err != nil </span><span class="cov0" title="0">{
+                return OutPutToken{}, err
+        }</span>
+        <span class="cov0" title="0">refresh_tokenStr := refresh_token.Token
+        refresh_token.Token = uc.tokenService.HashToken(refresh_token.Token)
+        uc.tokenRepo.CreateToken(refresh_token)
+
+        return OutPutToken{access_token, refresh_tokenStr}, err</span>
+}
+
+func (uc *userUsecase) Promote(email string) error <span class="cov0" title="0">{
+        user, err := uc.repo.FindByEmail(email)
+        if err != nil </span><span class="cov0" title="0">{
+                return errors.New("user not found")
+        }</span>
+        <span class="cov0" title="0">if user.Role == "superadmin" </span><span class="cov0" title="0">{
+                return errors.New("superadmin cannot be promoted")
+        }</span>
+        <span class="cov0" title="0">err = uc.repo.UpdateRole(email, "admin")
+        return err</span>
+}
+
+func (uc *userUsecase) Demote(email string) error <span class="cov0" title="0">{
+        user, err := uc.repo.FindByEmail(email)
+        if err != nil </span><span class="cov0" title="0">{
+                return errors.New("user not found")
+        }</span>
+        <span class="cov0" title="0">if user.Role == "superadmin" </span><span class="cov0" title="0">{
+                return errors.New("superadmin cannot be demoted")
+        }</span>
+        <span class="cov0" title="0">err = uc.repo.UpdateRole(email, "user")
+        return err</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
