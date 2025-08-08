@@ -95,10 +95,27 @@ func (br *blogMongoRepo) GetBlogByID(blogID string) (models.Blog, error) {
 func (br *blogMongoRepo) UpdateBlog(blog models.Blog) (models.Blog, error) {
 	blog.UpdatedAt = time.Now()
 
-	filter := bson.M{"_id": blog.ID}
-	update := bson.M{"$set": blog}
+	objectID, err := primitive.ObjectIDFromHex(blog.ID)
+	if err != nil {
+		return models.Blog{}, err
+	}
 
-	_, err := br.collection.UpdateOne(context.TODO(), filter, update)
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{
+		"title":        blog.Title,
+		"content":      blog.Content,
+		"author_id":    blog.AuthorID,
+		"author_name":  blog.AuthorName,
+		"tags":         blog.Tags,
+		"view_count":   blog.ViewCount,
+		"likes":        blog.Likes,
+		"dislikes":     blog.Dislikes,
+		"comments":     blog.Comments,
+		"is_published": blog.IsPublished,
+		"updated_at":   blog.UpdatedAt,
+	}}
+
+	_, err = br.collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return models.Blog{}, err
 	}

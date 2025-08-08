@@ -9,10 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, tokenService interfaces.TokenService) {
+func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, recommendationUC interfaces.RecommendationUseCase, tokenService interfaces.TokenService) {
 	// Controllers
 	userController := controllers.NewUserController(userUC)
 	blogController := controllers.NewBlogController(blogUC)
+	recommendationController := controllers.NewRecommendationController(recommendationUC)
 
 	// Initialize profile controller
 	controllers.InitUserController(userUC)
@@ -28,6 +29,13 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 	r.GET("/blogs/filter", blogController.FilterBlogs)
 	r.GET("/blogs/:id", blogController.GetBlogByID)
 	r.GET("/blogs/:id/comments", blogController.GetComments)
+
+	// Recommendation routes (public)
+	r.GET("/recommendations/trending", recommendationController.GetTrendingContent)
+	r.GET("/recommendations/popular", recommendationController.GetPopularContent)
+	r.GET("/recommendations/new", recommendationController.GetNewContent)
+	r.GET("/recommendations/discovery", recommendationController.GetContentDiscovery)
+	r.GET("/blogs/:id/similar", recommendationController.GetSimilarContent)
 
 	// Protected routes
 	auth := r.Group("/api")
@@ -51,6 +59,17 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 		{
 			profile.GET("/", controllers.GetUserProfile)
 			profile.PUT("/", controllers.UpdateUserProfile)
+		}
+
+		// Recommendation routes (authenticated)
+		recommendations := auth.Group("/recommendations").Use(middlewares.AuthMiddleware(tokenService))
+		{
+			recommendations.POST("/track", recommendationController.TrackUserAction)
+			recommendations.GET("/personal", recommendationController.GetUserRecommendations)
+			recommendations.GET("/interests", recommendationController.GetUserInterests)
+			recommendations.GET("/behavior", recommendationController.GetUserBehaviorSummary)
+			recommendations.GET("/stats", recommendationController.GetRecommendationStats)
+			recommendations.PUT("/:id/view", recommendationController.MarkRecommendationViewed)
 		}
 
 		// Admin-only routes
