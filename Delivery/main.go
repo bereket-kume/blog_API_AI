@@ -39,12 +39,17 @@ func main() {
 	// === Infrastructure Layer ===
 	userRepo := repositories.NewUserMongoRepo(database.GetCollection("users"))
 	tokenRepo := repositories.NewTokenMongoRepo(database.GetCollection("tokens"))
+	emailService := services.NewEmailService(
+		os.Getenv("RESEND_API_KEY"),
+		os.Getenv("FROM_EMAIL"),
+		os.Getenv("FRONTEND_URL"),
+	)
 
 	hasher := services.BcryptHasher{}
 	jwtService := services.NewJWTService(accessSecret, refreshSecret, accessTTL, refreshTTL)
 
 	// === Usecases ===
-	userUC := usecases.NewUserUsecase(userRepo, hasher, jwtService, tokenRepo)
+	userUC := usecases.NewUserUsecase(userRepo, hasher, jwtService, tokenRepo, emailService)
 
 	// === Setup Router ===
 	r := gin.Default()
@@ -55,3 +60,27 @@ func main() {
 		log.Fatal("Failed to run server:", err)
 	}
 }
+
+// package main
+
+// import (
+// 	"fmt"
+
+// 	"github.com/resend/resend-go/v2"
+// )
+
+// func main() {
+// 	apiKey := "re_dBw2b75y_3J2sVAFqtJTgq4HaXx3LTsZ3"
+
+// 	client := resend.NewClient(apiKey)
+
+// 	params := &resend.SendEmailRequest{
+// 		From:    "onboarding@resend.dev",
+// 		To:      []string{"awelabubekar625@gmail.com"},
+// 		Subject: "Hello World",
+// 		Html:    "<p>Congrats on sending your <strong>first email</strong>!</p>",
+// 	}
+
+// 	sent, err := client.Emails.Send(params)
+// 	fmt.Print(err, sent)
+// }
