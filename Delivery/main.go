@@ -40,6 +40,9 @@ func main() {
 	blogRepo := repositories.NewBlogMongoRepo(blogCollection)
 	tokenRepo := repositories.NewTokenMongoRepo(tokenCollection)
 
+	// Initialize recommendation repository
+	recommendationRepo := repositories.NewRecommendationMongoRepo(database.GetClient(), database.GetDatabase())
+
 	// Initialize services
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -49,9 +52,13 @@ func main() {
 	jwtService := services.NewJWTService(jwtSecret, jwtSecret, 15*time.Minute, 7*24*time.Hour)
 	passwordService := &services.BcryptHasher{}
 
+	// Initialize recommendation service
+	recommendationService := services.NewRecommendationService(recommendationRepo, blogRepo)
+
 	// Initialize use cases
 	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo)
 	blogUC := usecases.NewBlogUseCase(blogRepo)
+	recommendationUC := usecases.NewRecommendationUseCase(recommendationRepo, blogRepo, recommendationService)
 
 	// Create Gin router with proper configuration
 	r := gin.New() // Use gin.New() instead of gin.Default() to avoid middleware duplication
@@ -93,8 +100,13 @@ func main() {
 		})
 	})
 
+	// Initialize recommendation worker
+	recommendationWorker := services.NewRecommendationWorker(recommendationUC)
+	recommendationWorker.Start()
+	defer recommendationWorker.Stop()
+
 	// Setup routes
-	routers.SetupRouter(r, userUC, blogUC, jwtService)
+	routers.SetupRouter(r, userUC, blogUC, recommendationUC, jwtService)
 
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
