@@ -9,60 +9,59 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, tokenService interfaces.TokenService) {
-	// Controllers
+func SetupRouter(router *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, aiSuggestionUC interfaces.AISuggestionUseCase, tokenService interfaces.TokenService) {
+	// Initialize controllers
 	userController := controllers.NewUserController(userUC)
 	blogController := controllers.NewBlogController(blogUC)
+	aiSuggestionController := controllers.NewAISuggestionController(aiSuggestionUC)
 
-	// Initialize profile controller
+	// Initialize profile controllers
 	controllers.InitUserController(userUC)
 
 	// Public routes
-	r.POST("/register", userController.Register)
-	r.POST("/login", userController.Login)
-	r.POST("/refresh", userController.RefreshToken)
+	router.POST("/register", userController.Register)
+	router.POST("/login", userController.Login)
+	router.POST("/refresh", userController.RefreshToken)
 
-	// Blog routes (public)
-	r.GET("/blogs", blogController.GetPaginatedBlogs)
-	r.GET("/blogs/search", blogController.SearchBlogs)
-	r.GET("/blogs/filter", blogController.FilterBlogs)
-	r.GET("/blogs/:id", blogController.GetBlogByID)
-	r.GET("/blogs/:id/comments", blogController.GetComments)
+	router.GET("/blogs", blogController.GetPaginatedBlogs)
+	router.GET("/blogs/search", blogController.SearchBlogs)
+	router.GET("/blogs/filter", blogController.FilterBlogs)
+	router.GET("/blogs/:id", blogController.GetBlogByID)
+	router.GET("/blogs/:id/comments", blogController.GetComments)
 
-	// Protected routes
-	auth := r.Group("/api")
+	// Protected routes with real authentication
+	auth := router.Group("/api")
 	{
-		// Blog routes (authenticated)
+		// User profile routes with real auth
+		user := auth.Group("/user").Use(middlewares.AuthMiddleware(tokenService))
+		{
+			user.GET("/profile", controllers.GetUserProfile)
+			user.PUT("/profile", controllers.UpdateUserProfile)
+		}
+
+		// Blog routes with real auth
 		blogs := auth.Group("/blogs").Use(middlewares.AuthMiddleware(tokenService))
 		{
 			blogs.POST("/", blogController.CreateBlog)
 			blogs.PUT("/:id", blogController.UpdateBlog)
 			blogs.DELETE("/:id", blogController.DeleteBlog)
 			blogs.POST("/:id/comments", blogController.AddComment)
-			blogs.POST("/:id/view", blogController.IncrementViewCount)
 			blogs.POST("/:id/like", blogController.LikeBlog)
-			blogs.DELETE("/:id/like", blogController.UnlikeBlog)
+			blogs.POST("/:id/unlike", blogController.UnlikeBlog)
 			blogs.POST("/:id/dislike", blogController.DislikeBlog)
-			blogs.DELETE("/:id/dislike", blogController.RemoveDislike)
+			blogs.POST("/:id/remove-dislike", blogController.RemoveDislike)
 		}
 
-		// Profile routes (authenticated)
-		profile := auth.Group("/profile").Use(middlewares.AuthMiddleware(tokenService))
+		// AI routes with real auth
+		ai := auth.Group("/ai").Use(middlewares.AuthMiddleware(tokenService))
 		{
-			profile.GET("/", controllers.GetUserProfile)
-			profile.PUT("/", controllers.UpdateUserProfile)
-		}
-
-		// Admin-only routes
-		admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin"))
-		{
-			admin.POST("/promote/:email", userController.Promote)
-		}
-
-		// Superadmin-only routes
-		super := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
-		{
-			super.POST("/demote/:email", userController.Demote)
+			ai.POST("/suggestions", controllers.GenerateAISuggestion)
+			ai.POST("/ideas", controllers.GenerateContentIdeas)
+			ai.POST("/save", aiSuggestionController.SaveAISuggestion)
+			ai.GET("/suggestions", aiSuggestionController.GetAISuggestions)
+			ai.GET("/suggestions/status/:status", aiSuggestionController.GetAISuggestionsByStatus)
+			ai.POST("/suggestions/:id/convert-to-draft", aiSuggestionController.ConvertSuggestionToDraft)
+			ai.DELETE("/suggestions/:id", aiSuggestionController.DeleteAISuggestion)
 		}
 	}
 }

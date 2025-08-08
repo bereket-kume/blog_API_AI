@@ -5,7 +5,6 @@ import (
 	"blog-api/Infrastructure/database"
 	"blog-api/Infrastructure/repositories"
 	"blog-api/Infrastructure/services"
-	"blog-api/Infrastructure/utils"
 	"blog-api/usecases"
 	"log"
 	"net/http"
@@ -14,13 +13,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables from .env file
-	utils.LoadEnv()
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	// Set Gin mode based on environment
+	// Set Gin mode
 	if os.Getenv("ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -31,37 +33,33 @@ func main() {
 	}
 	defer database.Disconnect()
 
-	// Initialize repositories
+	// Initialize MongoDB collections
 	userCollection := database.GetCollection("users")
 	blogCollection := database.GetCollection("blogs")
 	tokenCollection := database.GetCollection("tokens")
+	aiSuggestionCollection := database.GetCollection("ai_suggestions")
 
+	// Initialize repositories
 	userRepo := repositories.NewUserMongoRepo(userCollection)
 	blogRepo := repositories.NewBlogMongoRepo(blogCollection)
 	tokenRepo := repositories.NewTokenMongoRepo(tokenCollection)
+	aiSuggestionRepo := repositories.NewAISuggestionMongoRepo(aiSuggestionCollection)
 
 	// Initialize services
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "default-secret-key-change-in-production"
 	}
-
 	jwtService := services.NewJWTService(jwtSecret, jwtSecret, 15*time.Minute, 7*24*time.Hour)
 	passwordService := &services.BcryptHasher{}
 
 	// Initialize use cases
 	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo)
 	blogUC := usecases.NewBlogUseCase(blogRepo)
+	aiSuggestionUC := usecases.NewAISuggestionUseCase(aiSuggestionRepo, blogRepo)
 
-	// Create Gin router with proper configuration
-	r := gin.New() // Use gin.New() instead of gin.Default() to avoid middleware duplication
-
-	// Add middleware manually
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
-	// Configure proxy trust for security
-	r.SetTrustedProxies([]string{"127.0.0.1", "::1"}) // Trust only localhost
+	// Create Gin router
+	r := gin.Default()
 
 	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
@@ -73,7 +71,6 @@ func main() {
 			c.AbortWithStatus(204)
 			return
 		}
-
 		c.Next()
 	})
 
@@ -93,22 +90,20 @@ func main() {
 		})
 	})
 
-	// Setup routes
-	routers.SetupRouter(r, userUC, blogUC, jwtService)
+	// Setup routes with use cases
+	routers.SetupRouter(r, userUC, blogUC, aiSuggestionUC, jwtService)
 
-	// Get port from environment or use default
+	// Run server on port
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	// Validate port
 	if _, err := strconv.Atoi(port); err != nil {
 		log.Fatal("Invalid PORT environment variable")
 	}
 
 	log.Printf("Server starting on port %s", port)
 	if err := r.Run(":" + port); err != nil {
-		log.Fatal("Failed to start server:", err)
+		log.Fatalf("Failed to run server: %v", err)
 	}
 }
