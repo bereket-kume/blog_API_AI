@@ -74,21 +74,109 @@ func (ctrl *UserController) RefreshToken(c *gin.Context) {
 }
 
 // PUT /promote/:email
-func (ctrl *UserController) Promote(c *gin.Context) {
-	email := c.Param("email")
-	if err := ctrl.userUC.Promote(email); err != nil {
+func (uc *UserController) Promote(c *gin.Context) {
+	var req EmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err := uc.userUC.Promote(req.Email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "User promoted successfully"})
 }
 
-// PUT /demote/:email
-func (ctrl *UserController) Demote(c *gin.Context) {
-	email := c.Param("email")
-	if err := ctrl.userUC.Demote(email); err != nil {
+func (uc *UserController) Demote(c *gin.Context) {
+	var req EmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err := uc.userUC.Demote(req.Email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "User demoted successfully"})
+}
+
+// controllers/user_controller.go
+
+func (uc *UserController) Logout(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+
+	// Parse JSON
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token is required"})
+		return
+	}
+
+	// Call usecase
+	err := uc.userUC.Logout(req.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
+}
+
+func (uc *UserController) RequestPasswordReset(c *gin.Context) {
+	var req EmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
+		return
+	}
+
+	if err := uc.userUC.RequestPasswordReset(req.Email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset link sent"})
+}
+
+// POST /reset-password
+func (uc *UserController) ResetPassword(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token is required"})
+		return
+	}
+	var req struct {
+		NewPassword string `json:"new_password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token and new password are required"})
+		return
+	}
+
+	if err := uc.userUC.ResetPassword(token, req.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password has been reset successfully"})
+}
+
+// GET /verify-email?token=...
+func (uc *UserController) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token is required"})
+		return
+	}
+
+	if err := uc.userUC.VerifyEmail(token); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Email verified successfully"})
 }

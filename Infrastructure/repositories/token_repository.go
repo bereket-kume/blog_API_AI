@@ -24,13 +24,13 @@ func (tr *tokenMongoRepo) CreateToken(token *models.Token) error {
 }
 
 func (tr *tokenMongoRepo) DeleteToken(tokenID string) error {
-	_, err := tr.collection.DeleteOne(context.TODO(), bson.M{"id": tokenID})
+	_, err := tr.collection.DeleteOne(context.TODO(), bson.M{"_id": tokenID})
 	return err
 }
 
 func (tr *tokenMongoRepo) Update(token *models.Token) error {
 	db_token := db_models.FromDomainToken(token)
-	filter := bson.M{"id": db_token.ID}
+	filter := bson.M{"_id": db_token.ID}
 	update := bson.M{"$set": db_token}
 	_, err := tr.collection.UpdateOne(context.TODO(), filter, update)
 	return err
@@ -38,7 +38,7 @@ func (tr *tokenMongoRepo) Update(token *models.Token) error {
 
 func (tr *tokenMongoRepo) GetToken(tokenID string) (*models.Token, error) {
 	var token db_models.Token
-	filter := bson.M{"id": tokenID}
+	filter := bson.M{"_id": tokenID}
 	err := tr.collection.FindOne(context.TODO(), filter).Decode(&token)
 	if err != nil {
 		return nil, err

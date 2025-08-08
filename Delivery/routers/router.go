@@ -22,6 +22,23 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 	r.POST("/register", userController.Register)
 	r.POST("/login", userController.Login)
 	r.POST("/refresh", userController.RefreshToken)
+	r.GET("/verify-email", userController.VerifyEmail)
+	r.POST("/forgot-password", userController.RequestPasswordReset)
+	r.GET("/reset-password", userController.ResetPassword)
+
+	// Blog routes (public)
+	r.GET("/blogs", blogController.GetPaginatedBlogs)
+	r.GET("/blogs/search", blogController.SearchBlogs)
+	r.GET("/blogs/filter", blogController.FilterBlogs)
+	r.GET("/blogs/:id", blogController.GetBlogByID)
+	r.GET("/blogs/:id/comments", blogController.GetComments)
+
+	// Recommendation routes (public)
+	r.GET("/recommendations/trending", recommendationController.GetTrendingContent)
+	r.GET("/recommendations/popular", recommendationController.GetPopularContent)
+	r.GET("/recommendations/new", recommendationController.GetNewContent)
+	r.GET("/recommendations/discovery", recommendationController.GetContentDiscovery)
+	r.GET("/blogs/:id/similar", recommendationController.GetSimilarContent)
 
 	// Blog routes (public)
 	r.GET("/blogs", blogController.GetPaginatedBlogs)
@@ -73,15 +90,14 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 		}
 
 		// Admin-only routes
-		admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin"))
-		{
-			admin.POST("/promote/:email", userController.Promote)
-		}
+		auth.POST("/promote/",
+			middlewares.AuthMiddleware(tokenService, "admin", "superadmin"),
+			userController.Promote)
 
-		// Superadmin-only routes
-		super := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
-		{
-			super.POST("/demote/:email", userController.Demote)
-		}
+		// Demote (superadmin only)
+		auth.POST("/demote/",
+			middlewares.AuthMiddleware(tokenService, "superadmin"),
+			userController.Demote)
+		auth.POST("/logout", middlewares.AuthMiddleware(tokenService, "user", "admin", "superadmin"), userController.Logout)
 	}
 }

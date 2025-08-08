@@ -7,6 +7,7 @@ import (
 type Token struct {
 	ID        string // Use string instead of ObjectID
 	UserID    string
+	Email     string
 	Token     string
 	CreatedAt time.Time
 	ExpiresAt time.Time
@@ -28,4 +29,9 @@ type UserRefreshClaims struct {
 	TokenID   string
 	ExpiresAt time.Time
 	CreatedAt time.Time
+}
+
+type TokenClaims struct {
+	TokenID   string
+	ExpiresAt time.Time
 }

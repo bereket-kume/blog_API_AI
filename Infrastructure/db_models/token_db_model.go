@@ -13,6 +13,7 @@ type Token struct {
 	ExpiresAt time.Time `bson:"expires_at"`
 	IP        string    `bson:"ip"`
 	Device    string    `bson:"device"`
+	Email     string    `bson:"email"`
 }
 
 func FromDomainToken(token *models.Token) *Token {
@@ -24,6 +25,7 @@ func FromDomainToken(token *models.Token) *Token {
 		ExpiresAt: token.ExpiresAt,
 		IP:        token.IP,
 		Device:    token.Device,
+		Email:     token.Email,
 	}
 }
 
@@ -36,5 +38,6 @@ func ToDomainToken(token *Token) *models.Token {
 		ExpiresAt: token.ExpiresAt,
 		IP:        token.IP,
 		Device:    token.Device,
+		Email:     token.Email,
 	}
 }
