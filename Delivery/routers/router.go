@@ -40,20 +40,6 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 	r.GET("/recommendations/discovery", recommendationController.GetContentDiscovery)
 	r.GET("/blogs/:id/similar", recommendationController.GetSimilarContent)
 
-	// Blog routes (public)
-	r.GET("/blogs", blogController.GetPaginatedBlogs)
-	r.GET("/blogs/search", blogController.SearchBlogs)
-	r.GET("/blogs/filter", blogController.FilterBlogs)
-	r.GET("/blogs/:id", blogController.GetBlogByID)
-	r.GET("/blogs/:id/comments", blogController.GetComments)
-
-	// Recommendation routes (public)
-	r.GET("/recommendations/trending", recommendationController.GetTrendingContent)
-	r.GET("/recommendations/popular", recommendationController.GetPopularContent)
-	r.GET("/recommendations/new", recommendationController.GetNewContent)
-	r.GET("/recommendations/discovery", recommendationController.GetContentDiscovery)
-	r.GET("/blogs/:id/similar", recommendationController.GetSimilarContent)
-
 	// Protected routes
 	auth := r.Group("/api")
 	{
