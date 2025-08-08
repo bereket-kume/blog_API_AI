@@ -1,1 +1,7 @@
+# Python-related ignores
+__pycache__/
+*.pyc
+
+# Virtual environments
+ai_service/venv/
 .env
