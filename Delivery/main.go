@@ -52,11 +52,26 @@ func main() {
 	jwtService := services.NewJWTService(jwtSecret, jwtSecret, 15*time.Minute, 7*24*time.Hour)
 	passwordService := &services.BcryptHasher{}
 
+	// Initialize email service
+	emailAPIKey := os.Getenv("RESEND_API_KEY")
+	if emailAPIKey == "" {
+		emailAPIKey = "dummy-key-for-development"
+	}
+	fromEmail := os.Getenv("FROM_EMAIL")
+	if fromEmail == "" {
+		fromEmail = "noreply@blog-api.com"
+	}
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+	emailService := services.NewEmailService(emailAPIKey, fromEmail, frontendURL)
+
 	// Initialize recommendation service
 	recommendationService := services.NewRecommendationService(recommendationRepo, blogRepo)
 
 	// Initialize use cases
-	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo)
+	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo, emailService)
 	blogUC := usecases.NewBlogUseCase(blogRepo)
 	recommendationUC := usecases.NewRecommendationUseCase(recommendationRepo, blogRepo, recommendationService)
 
