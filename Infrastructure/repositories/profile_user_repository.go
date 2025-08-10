@@ -27,11 +27,24 @@ func (r *userRepository) UpdateUserProfile(ctx context.Context, id string, updat
 	}
 
 	update := bson.M{
-		"$set": bson.M{
-			"bio":     updated.Bio,
-			"picture": updated.Picture,
-			"contact": updated.Contact,
-		},
+		"$set": bson.M{},
+	}
+
+	// Only update fields that are provided and not empty
+	if updated.Username != "" {
+		update["$set"].(bson.M)["username"] = updated.Username
+	}
+	if updated.Email != "" {
+		update["$set"].(bson.M)["email"] = updated.Email
+	}
+	if updated.Bio != "" {
+		update["$set"].(bson.M)["bio"] = updated.Bio
+	}
+	if updated.Picture != "" {
+		update["$set"].(bson.M)["picture"] = updated.Picture
+	}
+	if updated.Contact != "" {
+		update["$set"].(bson.M)["contact"] = updated.Contact
 	}
 
 	_, err = collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
@@ -70,7 +83,16 @@ func (r *userRepository) CountUsers() (int64, error) {
 // Implement remaining methods from interfaces.UserRepository
 func (r *userRepository) Insert(user *models.User) error {
 	collection := Database.GetCollection("users")
-	_, err := collection.InsertOne(context.TODO(), user)
+	result, err := collection.InsertOne(context.TODO(), user)
+	if err != nil {
+		return err
+	}
+	
+	// Set the ID field with the generated ObjectID
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		user.ID = oid.Hex()
+	}
+	
 	return err
 }
 
