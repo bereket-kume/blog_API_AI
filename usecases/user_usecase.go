@@ -5,6 +5,7 @@ import (
 	"blog-api/Domain/models"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/mail"
 	"time"
@@ -155,16 +156,28 @@ func (uc *userUsecase) Register(user models.User) error {
 	tokenStr := verificationToken.Token
 	verificationToken.Token = uc.tokenService.HashToken(tokenStr)
 
-	err = uc.emailService.SendVerificationEmail(user.Username, user.Email, tokenStr)
-	if err != nil {
-		return err
-	}
-
+	// 5. Insert user into database first
 	if err := uc.repo.Insert(&user); err != nil {
 		return err
 	}
-	err = uc.tokenRepo.CreateToken(verificationToken)
-	return err
+
+	// 6. Store verification token
+	if err := uc.tokenRepo.CreateToken(verificationToken); err != nil {
+		// If token storage fails, we should clean up the user
+		log.Printf("Failed to store verification token for user %s, cleaning up: %v", user.Email, err)
+		// Note: In production, you might want to implement a cleanup mechanism
+		return fmt.Errorf("failed to create verification token: %w", err)
+	}
+
+	// 7. Send verification email (non-blocking for registration success)
+	go func() {
+		if err := uc.emailService.SendVerificationEmail(user.Username, user.Email, tokenStr); err != nil {
+			log.Printf("Failed to send verification email to %s: %v", user.Email, err)
+			// Don't fail registration if email fails, just log it
+		}
+	}()
+
+	return nil
 
 }
 

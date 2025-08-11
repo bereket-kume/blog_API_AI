@@ -1,0 +1,33 @@
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/blog_db
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+
+# Application Configuration
+PORT=8080
+ENV=development
+
+# Local MongoDB Configuration
+MONGO_DATABASE=blog_db
+
+# AI Service Configuration
+AI_SERVICE_URL=http://localhost:8001
+
+# Email Service Configuration (Brevo SMTP)
+# Get these credentials from your Brevo dashboard
+BREVO_SMTP_HOST=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
+BREVO_SMTP_USERNAME=your-brevo-smtp-username
+BREVO_SMTP_PASSWORD=your-brevo-smtp-password
+FROM_EMAIL=noreply@yourdomain.com
+FRONTEND_URL=http://localhost:3000
+
+# Instructions:
+# 1. Copy this file to .env
+# 2. Replace the placeholder values with your actual credentials
+# 3. For Brevo SMTP:
+#    - Go to your Brevo dashboard
+#    - Navigate to Senders & IP > SMTP & API
+#    - Copy your SMTP credentials
+#    - Use your verified sender email for FROM_EMAIL 

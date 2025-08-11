@@ -3,6 +3,7 @@ package controllers
 import (
 	"blog-api/Domain/models"
 	"blog-api/usecases"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,9 +21,13 @@ func NewUserController(userUC usecases.UserUsecaseInterface) *UserController {
 func (ctrl *UserController) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Registration failed - JSON binding error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format: " + err.Error()})
 		return
 	}
+
+	// Log the registration attempt
+	log.Printf("Registration attempt for user: %s, email: %s", req.Username, req.Email)
 
 	user := models.User{
 		Username: req.Username,
@@ -31,9 +36,12 @@ func (ctrl *UserController) Register(c *gin.Context) {
 	}
 
 	if err := ctrl.userUC.Register(user); err != nil {
+		log.Printf("Registration failed - usecase error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	log.Printf("User registered successfully: %s", req.Email)
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 }
 

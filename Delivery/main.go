@@ -5,27 +5,22 @@ import (
 	"blog-api/Infrastructure/database"
 	"blog-api/Infrastructure/repositories"
 	"blog-api/Infrastructure/services"
+	"blog-api/Infrastructure/utils"
 	"blog-api/usecases"
-	"context"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// Load environment variables from .env file
+	utils.LoadEnv()
 
-	// Set Gin mode
+	// Set Gin mode based on environment
 	if os.Getenv("ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -36,17 +31,14 @@ func main() {
 	}
 	defer database.Disconnect()
 
-	// Initialize MongoDB collections
+	// Initialize repositories
 	userCollection := database.GetCollection("users")
 	blogCollection := database.GetCollection("blogs")
 	tokenCollection := database.GetCollection("tokens")
-	aiSuggestionCollection := database.GetCollection("ai_suggestions")
 
-	// Initialize repositories
 	userRepo := repositories.NewUserMongoRepo(userCollection)
 	blogRepo := repositories.NewBlogMongoRepo(blogCollection)
 	tokenRepo := repositories.NewTokenMongoRepo(tokenCollection)
-	aiSuggestionRepo := repositories.NewAISuggestionMongoRepo(aiSuggestionCollection)
 
 	// Initialize recommendation repository
 	recommendationRepo := repositories.NewRecommendationMongoRepo(database.GetClient(), database.GetDatabase())
@@ -56,13 +48,26 @@ func main() {
 	if jwtSecret == "" {
 		jwtSecret = "default-secret-key-change-in-production"
 	}
+
 	jwtService := services.NewJWTService(jwtSecret, jwtSecret, 15*time.Minute, 7*24*time.Hour)
 	passwordService := &services.BcryptHasher{}
 
-	// Initialize email service
-	emailAPIKey := os.Getenv("RESEND_API_KEY")
-	if emailAPIKey == "" {
-		emailAPIKey = "dummy-key-for-development"
+	// Initialize email service - Brevo SMTP
+	smtpHost := os.Getenv("BREVO_SMTP_HOST")
+	if smtpHost == "" {
+		smtpHost = "smtp-relay.brevo.com"
+	}
+	smtpPort := os.Getenv("BREVO_SMTP_PORT")
+	if smtpPort == "" {
+		smtpPort = "587"
+	}
+	smtpUsername := os.Getenv("BREVO_SMTP_USERNAME")
+	if smtpUsername == "" {
+		smtpUsername = "dummy-key-for-development"
+	}
+	smtpPassword := os.Getenv("BREVO_SMTP_PASSWORD")
+	if smtpPassword == "" {
+		smtpPassword = "dummy-key-for-development"
 	}
 	fromEmail := os.Getenv("FROM_EMAIL")
 	if fromEmail == "" {
@@ -72,7 +77,12 @@ func main() {
 	if frontendURL == "" {
 		frontendURL = "http://localhost:3000"
 	}
-	emailService := services.NewEmailService(emailAPIKey, fromEmail, frontendURL)
+
+	// Log email service configuration
+	log.Printf("Email service configuration - Host: %s, Port: %s, Username: %s, From: %s",
+		smtpHost, smtpPort, smtpUsername, fromEmail)
+
+	emailService := services.NewEmailService(smtpHost, smtpPort, smtpUsername, smtpPassword, fromEmail, frontendURL)
 
 	// Initialize recommendation service
 	recommendationService := services.NewRecommendationService(recommendationRepo, blogRepo)
@@ -81,36 +91,28 @@ func main() {
 	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo, emailService)
 	blogUC := usecases.NewBlogUseCase(blogRepo)
 	recommendationUC := usecases.NewRecommendationUseCase(recommendationRepo, blogRepo, recommendationService)
-	aiSuggestionUC := usecases.NewAISuggestionUseCase(aiSuggestionRepo, blogRepo)
 
-	// Create Gin router
-	r := gin.Default()
+	// Create Gin router with proper configuration
+	r := gin.New() // Use gin.New() instead of gin.Default() to avoid middleware duplication
 
-	// Add timeout middleware
-	r.Use(func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
-		defer cancel()
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
-	})
+	// Add middleware manually
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+
+	// Configure proxy trust for security
+	r.SetTrustedProxies([]string{"127.0.0.1", "::1"}) // Trust only localhost
 
 	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
-		// Get allowed origins from environment or use default
-		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
-		if allowedOrigin == "" {
-			allowedOrigin = "*"
-		}
-
-		c.Header("Access-Control-Allow-Origin", allowedOrigin)
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		c.Header("Access-Control-Allow-Credentials", "true")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
+
 		c.Next()
 	})
 
@@ -132,51 +134,25 @@ func main() {
 
 	// Initialize recommendation worker
 	recommendationWorker := services.NewRecommendationWorker(recommendationUC)
-	if err := recommendationWorker.Start(); err != nil {
-		log.Printf("Warning: Failed to start recommendation worker: %v", err)
-	} else {
-		defer recommendationWorker.Stop()
-	}
+	recommendationWorker.Start()
+	defer recommendationWorker.Stop()
 
-	// Setup routes with all use cases
-	routers.SetupRouter(r, userUC, blogUC, recommendationUC, aiSuggestionUC, jwtService)
+	// Setup routes
+	routers.SetupRouter(r, userUC, blogUC, recommendationUC, jwtService)
 
-	// Run server on port
+	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	// Validate port
 	if _, err := strconv.Atoi(port); err != nil {
 		log.Fatal("Invalid PORT environment variable")
 	}
 
-	// Create HTTP server
-	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: r,
+	log.Printf("Server starting on port %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
-
-	// Start server in a goroutine
-	go func() {
-		log.Printf("Server starting on port %s", port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to run server: %v", err)
-		}
-	}()
-
-	// Wait for interrupt signal to gracefully shutdown the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
-
-	// The context is used to inform the server it has 5 seconds to finish
-	// the request it is currently handling
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
-	}
-
-	log.Println("Server exiting")
 }

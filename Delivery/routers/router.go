@@ -9,14 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, recommendationUC interfaces.RecommendationUseCase, aiSuggestionUC interfaces.AISuggestionUseCase, tokenService interfaces.TokenService) {
-	// Initialize controllers
+func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC usecases.BlogUseCase, recommendationUC interfaces.RecommendationUseCase, tokenService interfaces.TokenService) {
+	// Controllers
 	userController := controllers.NewUserController(userUC)
 	blogController := controllers.NewBlogController(blogUC)
 	recommendationController := controllers.NewRecommendationController(recommendationUC)
-	aiSuggestionController := controllers.NewAISuggestionController(aiSuggestionUC)
 
-	// Initialize profile controllers
+	// Initialize profile controller
 	controllers.InitUserController(userUC)
 
 	// Public routes
@@ -27,6 +26,7 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 	r.POST("/forgot-password", userController.RequestPasswordReset)
 	r.GET("/reset-password", userController.ResetPassword)
 
+	// Blog routes (public)
 	r.GET("/blogs", blogController.GetPaginatedBlogs)
 	r.GET("/blogs/search", blogController.SearchBlogs)
 	r.GET("/blogs/filter", blogController.FilterBlogs)
@@ -43,36 +43,25 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 	// Protected routes
 	auth := r.Group("/api")
 	{
-		// User profile routes with real auth
-		user := auth.Group("/user").Use(middlewares.AuthMiddleware(tokenService))
-		{
-			user.GET("/profile", controllers.GetUserProfile)
-			user.PUT("/profile", controllers.UpdateUserProfile)
-		}
-
-		// Blog routes with real auth
+		// Blog routes (authenticated)
 		blogs := auth.Group("/blogs").Use(middlewares.AuthMiddleware(tokenService))
 		{
 			blogs.POST("/", blogController.CreateBlog)
 			blogs.PUT("/:id", blogController.UpdateBlog)
 			blogs.DELETE("/:id", blogController.DeleteBlog)
 			blogs.POST("/:id/comments", blogController.AddComment)
+			blogs.POST("/:id/view", blogController.IncrementViewCount)
 			blogs.POST("/:id/like", blogController.LikeBlog)
-			blogs.POST("/:id/unlike", blogController.UnlikeBlog)
+			blogs.DELETE("/:id/like", blogController.UnlikeBlog)
 			blogs.POST("/:id/dislike", blogController.DislikeBlog)
-			blogs.POST("/:id/remove-dislike", blogController.RemoveDislike)
+			blogs.DELETE("/:id/dislike", blogController.RemoveDislike)
 		}
 
-		// AI routes with real auth
-		ai := auth.Group("/ai").Use(middlewares.AuthMiddleware(tokenService))
+		// Profile routes (authenticated)
+		profile := auth.Group("/profile").Use(middlewares.AuthMiddleware(tokenService))
 		{
-			ai.POST("/suggestions", controllers.GenerateAISuggestion)
-			ai.POST("/ideas", controllers.GenerateContentIdeas)
-			ai.POST("/save", aiSuggestionController.SaveAISuggestion)
-			ai.GET("/suggestions", aiSuggestionController.GetAISuggestions)
-			ai.GET("/suggestions/status/:status", aiSuggestionController.GetAISuggestionsByStatus)
-			ai.POST("/suggestions/:id/convert-to-draft", aiSuggestionController.ConvertSuggestionToDraft)
-			ai.DELETE("/suggestions/:id", aiSuggestionController.DeleteAISuggestion)
+			profile.GET("/", controllers.GetUserProfile)
+			profile.PUT("/", controllers.UpdateUserProfile)
 		}
 
 		// Recommendation routes (authenticated)
@@ -87,18 +76,14 @@ func SetupRouter(r *gin.Engine, userUC usecases.UserUsecaseInterface, blogUC use
 		}
 
 		// Admin-only routes
-		admin := auth.Group("/admin").Use(middlewares.AuthMiddleware(tokenService, "admin", "superadmin"))
-		{
-			admin.POST("/promote", userController.Promote)
-		}
+		auth.POST("/promote/",
+			middlewares.AuthMiddleware(tokenService, "admin", "superadmin"),
+			userController.Promote)
 
-		// Superadmin-only routes
-		superadmin := auth.Group("/superadmin").Use(middlewares.AuthMiddleware(tokenService, "superadmin"))
-		{
-			superadmin.POST("/demote", userController.Demote)
-		}
-
-		// Logout route (all authenticated users)
-		auth.POST("/logout", middlewares.AuthMiddleware(tokenService), userController.Logout)
+		// Demote (superadmin only)
+		auth.POST("/demote/",
+			middlewares.AuthMiddleware(tokenService, "superadmin"),
+			userController.Demote)
+		auth.POST("/logout", middlewares.AuthMiddleware(tokenService, "user", "admin", "superadmin"), userController.Logout)
 	}
 }
