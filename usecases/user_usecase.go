@@ -143,28 +143,31 @@ func (uc *userUsecase) Register(user models.User) error {
 	if err == nil {
 		return errors.New("email already exists")
 	}
-	user.Verified = false
-
-	// 4. Generate verification token (UUID or JWT)
-	Exp := time.Hour * 1
-	verificationToken, err := uc.tokenService.GenerateRandomJWT(Exp)
-	if err != nil {
-		return err
-	}
-	verificationToken.Email = user.Email
-	tokenStr := verificationToken.Token
-	verificationToken.Token = uc.tokenService.HashToken(tokenStr)
-
-	err = uc.emailService.SendVerificationEmail(user.Username, user.Email, tokenStr)
-	if err != nil {
-		return err
-	}
-
+	user.Verified = true
 	if err := uc.repo.Insert(&user); err != nil {
 		return err
 	}
-	err = uc.tokenRepo.CreateToken(verificationToken)
-	return err
+	return nil
+	// 4. Generate verification token (UUID or JWT)
+	// Exp := time.Hour * 1
+	// verificationToken, err := uc.tokenService.GenerateRandomJWT(Exp)
+	// if err != nil {
+	// 	return err
+	// }
+	// verificationToken.Email = user.Email
+	// tokenStr := verificationToken.Token
+	// verificationToken.Token = uc.tokenService.HashToken(tokenStr)
+
+	// err = uc.emailService.SendVerificationEmail(user.Username, user.Email, tokenStr)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if err := uc.repo.Insert(&user); err != nil {
+	// 	return err
+	// }
+	// err = uc.tokenRepo.CreateToken(verificationToken)
+	// return err
 
 }
 

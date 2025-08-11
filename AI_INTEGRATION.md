@@ -1,4 +1,15 @@
 # AI Integration Documentation
+uvicorn main:app --reload --port 8001
+
+{
+  "username": "gebriel123",
+  "email": "gabrieladmasu0@gmail.com",
+  "password": "Password123!"
+}
+{
+  "email": "gabrieladmasu0@gmail.com",
+  "password": "Password123!"
+}
 
 This document explains how to use the AI integration features in the blog API.
 
@@ -28,7 +39,7 @@ The AI integration provides two main features:
   "keywords": ["technology", "programming", "golang"],
   "tone": "professional",
   "type": "improvement",
-  "blog_content": "Your existing blog content here..."
+  "blog_content": "the difference of golang"
 }
 ```
 
