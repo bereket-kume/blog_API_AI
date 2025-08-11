@@ -20,6 +20,7 @@ func NewUserMongoRepo(col *mongo.Collection) *userMongoRepo {
 }
 
 func (ur *userMongoRepo) Insert(user *models.User) error {
+	user.Verified = true
 	db_user := db_models.FromDomainUser(user)
 	_, err := ur.collection.InsertOne(context.TODO(), db_user)
 	return err

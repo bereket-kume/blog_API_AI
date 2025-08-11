@@ -43,6 +43,9 @@ func main() {
 	// Initialize recommendation repository
 	recommendationRepo := repositories.NewRecommendationMongoRepo(database.GetClient(), database.GetDatabase())
 
+	// Initialize AI suggestion repository
+	aiSuggestionRepo := repositories.NewAISuggestionMongoRepo(database.GetCollection("ai_suggestions"))
+
 	// Initialize services
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -91,6 +94,7 @@ func main() {
 	userUC := usecases.NewUserUsecase(userRepo, passwordService, jwtService, tokenRepo, emailService)
 	blogUC := usecases.NewBlogUseCase(blogRepo)
 	recommendationUC := usecases.NewRecommendationUseCase(recommendationRepo, blogRepo, recommendationService)
+	aiSuggestionUC := usecases.NewAISuggestionUseCase(aiSuggestionRepo, blogRepo)
 
 	// Create Gin router with proper configuration
 	r := gin.New() // Use gin.New() instead of gin.Default() to avoid middleware duplication
@@ -138,7 +142,7 @@ func main() {
 	defer recommendationWorker.Stop()
 
 	// Setup routes
-	routers.SetupRouter(r, userUC, blogUC, recommendationUC, jwtService)
+	routers.SetupRouter(r, userUC, blogUC, recommendationUC, aiSuggestionUC, jwtService)
 
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
