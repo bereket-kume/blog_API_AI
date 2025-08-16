@@ -5,3 +5,4 @@ __pycache__/
 # Virtual environments
 ai_service/venv/
 .env
+.env_template

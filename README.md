@@ -325,7 +325,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 - **Issues**: Create GitHub issues for bugs or feature requests
-- **Documentation**: Check the [API docs](https://documenter.getpostman.com/view/24515281/2sA3XPBgv5)
+- **Documentation**: Check the [API docs](https://documenter.getpostman.com/view/38774125/2sB3BEnVMb#6a2d9476-e662-4bbb-9ec7-882c0af10d4c)
 - **Testing**: Use the comprehensive test suite
 
 
